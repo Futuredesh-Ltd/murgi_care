@@ -147,14 +147,44 @@ class MyhomeScreen extends StatelessWidget {
   // --- Helper: Beautiful Result Card ---
   Widget _buildResultCard(Map output) {
     String rawLabel = output['label'].toString();
+    String cleanId = _getCleanId(rawLabel);
     String formattedLabel = formatLabel(rawLabel);
     double confidence = (output['confidence'] as double) * 100;
 
-    // Determine color based on "Healthy"
-    bool isHealthy =
-        formattedLabel.toLowerCase().contains("healthy") ||
-        formattedLabel.contains("সুস্থ");
+    // --- SPECIAL CASE: IF OTHERS ---
+    if (cleanId == 'others') {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.amber.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.amber),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 40),
+            SizedBox(height: 10),
+            Text(
+              "সঠিক ছবি তুলুন",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে পরিষ্কার ছবি দিন।",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.brown),
+            ),
+          ],
+        ),
+      );
+    }
 
+    // --- EXISTING LOGIC FOR HEALTHY/DISEASED ---
+    bool isHealthy = cleanId == 'healthy';
     Color themeColor = isHealthy ? Colors.green : Colors.redAccent;
     Color bgColor = isHealthy ? Colors.green.shade50 : Colors.red.shade50;
 
@@ -164,13 +194,6 @@ class MyhomeScreen extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: themeColor.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: themeColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -181,23 +204,14 @@ class MyhomeScreen extends StatelessWidget {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: themeColor,
-              height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Text(
-              "Confidence: ${confidence.toStringAsFixed(1)}%",
-              style: TextStyle(
-                fontSize: 14,
-                color: themeColor.withOpacity(0.9),
-                fontWeight: FontWeight.w600,
-              ),
+          Text(
+            "Confidence: ${confidence.toStringAsFixed(1)}%",
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: themeColor.withOpacity(0.8),
             ),
           ),
         ],
@@ -209,9 +223,14 @@ class MyhomeScreen extends StatelessWidget {
   Widget _buildDiseaseInfo(String rawLabel) {
     String id = _getCleanId(rawLabel);
 
+    // --- UPDATED LOGIC: Hide info for 'healthy' and 'others' ---
+    if (id == 'others') {
+      return const SizedBox.shrink();
+    }
+
     Map<String, String>? data = diseaseInfo[id];
 
-    // If no data or healthy, hide this section
+    // If no data exists in map, hide this section
     if (data == null) return const SizedBox.shrink();
 
     return Column(
@@ -325,16 +344,11 @@ class MyhomeScreen extends StatelessWidget {
     String clean = label.replaceAll(RegExp(r'[0-9]'), '').trim().toLowerCase();
 
     // 2. Map your specific labels to the database keys
-    if (clean.contains('cocci')) {
-      return 'cocci'; // Covers "cocci" and "pcrcocci"
-    }
-    if (clean.contains('ncd')) return 'ncd'; // Covers "ncd" and "pcrncd"
-    if (clean.contains('salmo')) {
-      return 'salmo'; // Covers "salmo" and "pcrsalmo"
-    }
-    if (clean.contains('healthy')) {
-      return 'healthy'; // Covers "healthy" and "pcrhealthy"
-    }
+    if (clean.contains('others')) return 'others'; // Added support for 'others'
+    if (clean.contains('cocci')) return 'cocci';
+    if (clean.contains('ncd')) return 'ncd';
+    if (clean.contains('salmo')) return 'salmo';
+    if (clean.contains('healthy')) return 'healthy';
 
     return clean;
   }
@@ -343,6 +357,8 @@ class MyhomeScreen extends StatelessWidget {
   String formatLabel(String label) {
     String clean = label.replaceAll(RegExp(r'[0-9]'), '').trim().toLowerCase();
     switch (clean) {
+      case 'others':
+        return 'সঠিক ছবি নয় (Invalid)';
       case 'cocci':
       case 'pcrcocci':
         return 'রক্ত আমাশয় (Coccidiosis)';

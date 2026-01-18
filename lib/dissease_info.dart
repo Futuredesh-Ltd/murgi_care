@@ -36,12 +36,11 @@ final Map<String, Map<String, String>> diseaseInfo = {
     'treatment': '• চিকিৎসার প্রয়োজন নেই, নিয়মিত যত্ন নিন।',
   },
 
-  'pcrhealthy': {
-    'name': 'সুস্থ মুরগি (Healthy)',
-    'symptoms':
-        '• চোখ উজ্জ্বল ও চনমনে ভাব\n• পালক মসৃণ ও সাজানো\n• স্বাভাবিক খাবার ও পানি গ্রহণ',
-    'prevention':
-        '• নিয়মিত সুষম খাবার ও বিশুদ্ধ পানি\n• সঠিক সময়ে সব টিকা প্রদান',
-    'treatment': '• চিকিৎসার প্রয়োজন নেই, নিয়মিত যত্ন নিন।',
+  // Inside your diseaseInfo map at the bottom of the file
+  'others': {
+    'name': 'সঠিক ছবি নয় (Invalid Image)',
+    'symptoms': 'আপনার আপলোড করা ছবিটি মুরগির মলের (Poop) ছবি নয়।',
+    'prevention': 'দয়া করে মুরগির মলের পরিষ্কার ছবি তুলে আবার চেষ্টা করুন।',
+    'treatment': 'সঠিক ফলাফলের জন্য পর্যাপ্ত আলোতে ছবি তুলুন।',
   },
 };
