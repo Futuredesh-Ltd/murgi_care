@@ -11,6 +11,13 @@ class DiseaseProvider extends ChangeNotifier {
   File? get image => _image;
   List? get outputs => _outputs;
   bool get loading => _loading;
+  bool _isEnglish = false;
+  bool get isEnglish => _isEnglish;
+
+  void toggleLanguage() {
+    _isEnglish = !_isEnglish;
+    notifyListeners();
+  }
 
   DiseaseProvider() {
     _loading = true;
