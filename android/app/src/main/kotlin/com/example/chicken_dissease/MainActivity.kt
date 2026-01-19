@@ -1,4 +1,4 @@
-package com.example.chicken_dissease
+package com.futuredesh.chicken_dissease
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.chicken_dissease"
+    namespace = "com.futuredesh.chicken_dissease"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -27,7 +27,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.chicken_dissease"
+        applicationId = "com.futuredesh.chicken_dissease"
         
         // --- FIXED: TFLite requires minSdk 21. We set it explicitly here. ---
         minSdk = flutter.minSdkVersion 

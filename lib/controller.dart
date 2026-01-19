@@ -34,9 +34,9 @@ class DiseaseProvider extends ChangeNotifier {
         model: "assets/model.tflite",
         labels: "assets/labels.txt",
       );
-      print("Model loaded successfully");
+      debugPrint("Model loaded successfully");
     } catch (e) {
-      print("Error loading model: $e");
+      debugPrint("Error loading model: $e");
     }
   }
 
@@ -65,6 +65,13 @@ class DiseaseProvider extends ChangeNotifier {
     );
 
     _outputs = output;
+    _loading = false;
+    notifyListeners();
+  }
+
+  void reset() {
+    _image = null;
+    _outputs = null;
     _loading = false;
     notifyListeners();
   }

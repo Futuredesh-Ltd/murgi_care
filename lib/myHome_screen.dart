@@ -7,33 +7,109 @@ import 'controller.dart';
 class MyhomeScreen extends StatelessWidget {
   const MyhomeScreen({super.key});
 
+  // --- Helper: Show Accuracy Disclaimer ---
+  void _showDisclaimer(BuildContext context, bool isEnglish) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            const SizedBox(width: 10),
+            Text(isEnglish ? "Disclaimer" : "সতর্কবার্তা"),
+          ],
+        ),
+        content: Text(
+          isEnglish
+              ? "The model predictions may not be 100% accurate. Please consult a professional veterinarian for a final diagnosis."
+              : "মডেলের ফলাফল ১০০% নির্ভুল নাও হতে পারে। মুরগির সঠিক রোগ নির্ণয় এবং চিকিৎসার জন্য অবশ্যই একজন অভিজ্ঞ ভেটেরিনারি চিকিৎসকের পরামর্শ নিন।",
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(isEnglish ? "OK" : "ঠিক আছে"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Helper: Show About Us ---
+  void _showAboutUs(BuildContext context, bool isEnglish) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Center(child: Text(isEnglish ? "About Us" : "আমাদের সম্পর্কে")),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.teal,
+              backgroundImage: AssetImage("assets/techlogo.png"),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              isEnglish ? "Developed By" : "ডেভেলপ করেছে",
+              style: const TextStyle(color: Colors.black),
+            ),
+            const Text(
+              "FutureDesh Tech Team",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(isEnglish ? "Close" : "বন্ধ করুন"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Soft background
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        // --- ADDED: Leading Reset Button ---
+        leading: Consumer<DiseaseProvider>(
+          builder: (context, provider, child) {
+            if (provider.image == null) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.redAccent),
+              onPressed: () => provider.reset(),
+              tooltip: provider.isEnglish ? "Reset" : "রিসেট",
+            );
+          },
+        ),
         title: const Text(
           'Chicken Disease Detector',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: Color.fromARGB(255, 8, 63, 9),
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
-        // --- ADDED: Language Toggle Button ---
         actions: [
           Consumer<DiseaseProvider>(
             builder: (context, provider, child) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: TextButton(
-                  onPressed: () => provider.toggleLanguage(),
-                  child: Text(
-                    provider.isEnglish ? "বাংলা" : "ENG",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
+              return TextButton(
+                onPressed: () => provider.toggleLanguage(),
+                child: Text(
+                  provider.isEnglish ? "বাংলা" : "ENG",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal,
                   ),
                 ),
               );
@@ -93,10 +169,9 @@ class MyhomeScreen extends StatelessWidget {
                           child: Image.file(provider.image!, fit: BoxFit.cover),
                         ),
                 ),
-
                 const SizedBox(height: 32),
 
-                // --- 2. Logic: Loading / Result / Instructions ---
+                // --- 2. Logic: Result Section ---
                 if (provider.loading)
                   const Column(
                     children: [
@@ -116,15 +191,11 @@ class MyhomeScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Result Header Card
                       _buildResultCard(
                         provider.outputs![0],
                         provider.isEnglish,
                       ),
-
                       const SizedBox(height: 24),
-
-                      // Detailed Information Sections
                       _buildDiseaseInfo(
                         provider.outputs![0]['label'],
                         provider.isEnglish,
@@ -135,8 +206,8 @@ class MyhomeScreen extends StatelessWidget {
                   Center(
                     child: Text(
                       provider.isEnglish
-                          ? "Select an image to check health status"
-                          : "স্বাস্থ্য পরীক্ষা করতে একটি ছবি নির্বাচন করুন",
+                          ? "Select an image to check chickens health status"
+                          : "মুরগির স্বাস্থ্য পরীক্ষা করতে একটি ছবি নির্বাচন করুন",
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 15, color: Colors.grey),
                     ),
@@ -144,7 +215,7 @@ class MyhomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // --- 3. Action Buttons ---
+                // --- 3. Primary Action Buttons ---
                 Row(
                   children: [
                     Expanded(
@@ -166,6 +237,30 @@ class MyhomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 32),
+
+                // --- 4. Footer Icons (Caution & About) ---
+                const Divider(),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildFooterItem(
+                      icon: Icons.report_problem_outlined,
+                      label: provider.isEnglish ? "Caution" : "সতর্কতা",
+                      color: Colors.orange,
+                      onTap: () => _showDisclaimer(context, provider.isEnglish),
+                    ),
+                    _buildFooterItem(
+                      icon: Icons.info_outline,
+                      label: provider.isEnglish ? "About" : "তথ্য",
+                      color: Colors.indigo,
+                      onTap: () => _showAboutUs(context, provider.isEnglish),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           );
@@ -174,14 +269,42 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper: Beautiful Result Card ---
+  // --- Helper: Footer Menu Item ---
+  Widget _buildFooterItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildResultCard(Map output, bool isEnglish) {
     String rawLabel = output['label'].toString();
     String cleanId = _getCleanId(rawLabel);
     String formattedLabel = formatLabel(rawLabel, isEnglish);
     double confidence = (output['confidence'] as double) * 100;
 
-    // --- SPECIAL CASE: IF OTHERS ---
     if (cleanId == 'others') {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -219,7 +342,6 @@ class MyhomeScreen extends StatelessWidget {
       );
     }
 
-    // --- EXISTING LOGIC FOR HEALTHY/DISEASED ---
     bool isHealthy = cleanId == 'healthy';
     Color themeColor = isHealthy ? Colors.green : Colors.redAccent;
     Color bgColor = isHealthy ? Colors.green.shade50 : Colors.red.shade50;
@@ -255,18 +377,10 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper: Disease Info Section ---
   Widget _buildDiseaseInfo(String rawLabel, bool isEnglish) {
     String id = _getCleanId(rawLabel);
-
-    // --- UPDATED LOGIC: Hide info for 'healthy' and 'others' ---
-    if (id == "healthy" || id == 'others') {
-      return const SizedBox.shrink();
-    }
-
+    if (id == "healthy" || id == 'others') return const SizedBox.shrink();
     Map<String, String>? data = diseaseInfo[id];
-
-    // If no data exists in map, hide this section
     if (data == null) return const SizedBox.shrink();
 
     return Column(
@@ -293,7 +407,6 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper: Single Info Tile ---
   Widget _buildInfoTile({
     required String title,
     required String content,
@@ -342,7 +455,7 @@ class MyhomeScreen extends StatelessWidget {
                 content,
                 style: const TextStyle(
                   fontSize: 15,
-                  height: 1.6, // Better readability for Bangla
+                  height: 1.6,
                   color: Colors.black87,
                 ),
               ),
@@ -353,7 +466,6 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper: Action Button ---
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -376,20 +488,15 @@ class MyhomeScreen extends StatelessWidget {
   }
 
   String _getCleanId(String label) {
-    // 1. Remove numbers and spaces (e.g., "3 pcrcocci" -> "pcrcocci")
     String clean = label.replaceAll(RegExp(r'[0-9]'), '').trim().toLowerCase();
-
-    // 2. Map your specific labels to the database keys
-    if (clean.contains('others')) return 'others'; // Added support for 'others'
+    if (clean.contains('others')) return 'others';
     if (clean.contains('cocci')) return 'cocci';
     if (clean.contains('ncd')) return 'ncd';
     if (clean.contains('salmo')) return 'salmo';
     if (clean.contains('healthy')) return 'healthy';
-
     return clean;
   }
 
-  // --- LOGIC: Format Label for Header ---
   String formatLabel(String label, bool isEnglish) {
     String clean = label.replaceAll(RegExp(r'[0-9]'), '').trim().toLowerCase();
     switch (clean) {
