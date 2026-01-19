@@ -209,8 +209,8 @@ class MyhomeScreen extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               isEnglish
-                  ? "This doesn't look like chicken droppings. Please provide a clear image."
-                  : "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে পরিষ্কার ছবি দিন।",
+                  ? "This doesn't look like chicken droppings. Please provide a valid image."
+                  : "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে সঠিক ছবি দিন।",
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.brown),
             ),
