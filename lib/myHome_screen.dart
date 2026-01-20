@@ -61,7 +61,7 @@ class MyhomeScreen extends StatelessWidget {
               style: const TextStyle(color: Colors.black),
             ),
             const Text(
-              "FutureDesh Tech Team",
+              "Futuredesh Tech Team",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
