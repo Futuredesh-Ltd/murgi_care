@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:murgi_care/dissease_info.dart';
 import 'package:flutter/material.dart';
+import 'package:murgi_care/dissease_info.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'controller.dart';
@@ -26,7 +26,7 @@ class MyhomeScreen extends StatelessWidget {
           isEnglish
               ? "1. The model predictions may not be 100% accurate. Always consult a veterinarian for final diagnosis.\n\n"
                     "2. This app is strictly for Chicken droppings. Scanning any other animal's poop will result in invalid and inaccurate outcomes."
-              : "১. মডেলের ফলাফল ১০০% নির্ভুল নাও হতে পারে। মুরগির সঠিক রোগ নির্ণয় এবং চিকিৎসার জন্য অবশ্যই ভেটেরিনারি চিকিৎসকের পরামর্শ নিন।\n\n"
+              : "১. মডেলের ফলাফল ১০০% নির্ভুল নাও হতে পারে। মুরগির সঠিক রোগ নির্ণয় এবং চিকিৎসার জন্য অবশ্যই ভেটেরিনারি চিকিৎসকের পরামর্শ নিন।\n\n"
                     "২. এই অ্যাপটি শুধুমাত্র মুরগির মলের জন্য তৈরি। অন্য কোনো প্রাণীর মল স্ক্যান করলে ফলাফল ভুল এবং অগ্রহণযোগ্য হবে।",
           style: const TextStyle(fontSize: 16),
         ),
@@ -81,7 +81,6 @@ class MyhomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        // --- ADDED: Leading Reset Button ---
         leading: Consumer<DiseaseProvider>(
           builder: (context, provider, child) {
             if (provider.image == null) return const SizedBox.shrink();
@@ -195,13 +194,15 @@ class MyhomeScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Fixed: Passing Map data from provider
                       _buildResultCard(
                         provider.outputs![0],
                         provider.isEnglish,
                       ),
                       const SizedBox(height: 24),
+                      // Fixed: Accessing Map key ['label'] instead of .label
                       _buildDiseaseInfo(
-                        provider.outputs![0]['label'],
+                        provider.outputs![0]['label'].toString(),
                         provider.isEnglish,
                       ),
                     ],
@@ -241,10 +242,9 @@ class MyhomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 32),
 
-                // --- 4. Footer Icons (Caution & About) ---
+                // --- 4. Footer Icons ---
                 const Divider(),
                 const SizedBox(height: 16),
                 Row(
@@ -273,77 +273,17 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper: Footer Menu Item ---
-  Widget _buildFooterItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: color,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultCard(Map output, bool isEnglish) {
+  // FIXED: Handles dynamic Map input correctly
+  Widget _buildResultCard(dynamic output, bool isEnglish) {
     String rawLabel = output['label'].toString();
     String cleanId = _getCleanId(rawLabel);
     String formattedLabel = formatLabel(rawLabel, isEnglish);
+
+    // Confidence is now a double inside the map
     double confidence = (output['confidence'] as double) * 100;
 
     if (cleanId == 'others') {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.amber.shade50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.amber),
-        ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.amber,
-              size: 40,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              isEnglish ? "Invalid Image" : "সঠিক ছবি তুলুন",
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              isEnglish
-                  ? "This doesn't look like chicken droppings. Please provide a valid image."
-                  : "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে সঠিক ছবি দিন।",
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.brown),
-            ),
-          ],
-        ),
-      );
+      return _buildInvalidCard(isEnglish);
     }
 
     bool isHealthy = cleanId == 'healthy';
@@ -381,29 +321,78 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildInvalidCard(bool isEnglish) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.amber,
+            size: 40,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            isEnglish ? "Invalid Image" : "সঠিক ছবি তুলুন",
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            isEnglish
+                ? "This doesn't look like chicken droppings. Please provide a valid image."
+                : "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে সঠিক ছবি দিন।",
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.brown),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDiseaseInfo(String rawLabel, bool isEnglish) {
     String id = _getCleanId(rawLabel);
+
     if (id == "healthy" || id == 'others') return const SizedBox.shrink();
-    Map<String, String>? data = diseaseInfo[id];
-    if (data == null) return const SizedBox.shrink();
+
+    final data = diseaseInfo[id];
+
+    if (data == null) {
+      debugPrint("Warning: No info found in diseaseInfo for ID: $id");
+      return const SizedBox.shrink();
+    }
 
     return Column(
       children: [
         _buildInfoTile(
           title: isEnglish ? "Symptoms" : "লক্ষণ",
-          content: isEnglish ? data['symptoms_en']! : data['symptoms']!,
+          content: isEnglish
+              ? (data['symptoms_en'] ?? "")
+              : (data['symptoms'] ?? ""),
           icon: Icons.warning_amber_rounded,
           accentColor: Colors.orange,
         ),
         _buildInfoTile(
           title: isEnglish ? "Prevention" : "প্রতিরোধ",
-          content: isEnglish ? data['prevention_en']! : data['prevention']!,
+          content: isEnglish
+              ? (data['prevention_en'] ?? "")
+              : (data['prevention'] ?? ""),
           icon: Icons.shield_outlined,
           accentColor: Colors.blue,
         ),
         _buildInfoTile(
           title: isEnglish ? "Treatment" : "প্রাথমিক চিকিৎসা",
-          content: isEnglish ? data['treatment_en']! : data['treatment']!,
+          content: isEnglish
+              ? (data['treatment_en'] ?? "")
+              : (data['treatment'] ?? ""),
           icon: Icons.medical_services_outlined,
           accentColor: Colors.green,
         ),
@@ -484,17 +473,42 @@ class MyhomeScreen extends StatelessWidget {
         backgroundColor: color,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        elevation: 2,
-        shadowColor: color.withOpacity(0.4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  String _getCleanId(String label) {
-    debugPrint(label);
-    String clean = label.replaceAll(RegExp(r'[0-9]'), '').trim().toLowerCase();
+  Widget _buildFooterItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+  String _getCleanId(String label) {
+    String clean = label.replaceAll(RegExp(r'[0-9]'), '').trim().toLowerCase();
     if (clean.contains('others')) return 'others';
     if (clean.contains('cocci')) return 'cocci';
     if (clean.contains('ncd')) return 'ncd';
@@ -504,18 +518,16 @@ class MyhomeScreen extends StatelessWidget {
     if (clean.contains('fowlpox')) return 'fowlpox';
     if (clean.contains('bumblefoot')) return 'bumblefoot';
     if (clean.contains('coryza')) return 'coryza';
-
     return clean;
   }
 
   String formatLabel(String label, bool isEnglish) {
     String clean = _getCleanId(label);
-    debugPrint(clean);
     switch (clean) {
       case 'others':
-        return isEnglish ? 'Invalid Image' : 'সঠিক ছবি নয়';
+        return isEnglish ? 'Invalid Image' : 'সঠিক ছবি নয়';
       case 'cocci':
-        return isEnglish ? 'Coccidiosis' : 'রক্ত আমাশয়';
+        return isEnglish ? 'Coccidiosis' : 'রক্ত আমাশয়';
       case 'healthy':
         return isEnglish ? 'Healthy' : 'সুস্থ মুরগি';
       case 'ncd':
