@@ -86,25 +86,22 @@ class DiseaseProvider extends ChangeNotifier {
   Future<CroppedFile?> _cropImage(String path) async {
     return await ImageCropper().cropImage(
       sourcePath: path,
+      // Force the aspect ratio to be square
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: _isEnglish ? 'Crop Sample' : 'ক্রপ করুন',
           toolbarColor: Colors.teal,
           toolbarWidgetColor: Colors.white,
-          // Add the presets here if they aren't working at the top level
-          aspectRatioPresets: [
-            CropAspectRatioPreset.square,
-            CropAspectRatioPreset.original,
-          ],
           initAspectRatio: CropAspectRatioPreset.square,
-          lockAspectRatio: false, // This allows the draggable manual crop
+          lockAspectRatio: true, // User MUST crop in a square
+          hideBottomControls:
+              true, // Makes the UI cleaner since they can't change ratio
         ),
         IOSUiSettings(
           title: _isEnglish ? 'Crop Sample' : 'ক্রপ করুন',
-          aspectRatioPresets: [
-            CropAspectRatioPreset.square,
-            CropAspectRatioPreset.original,
-          ],
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
         ),
       ],
     );
