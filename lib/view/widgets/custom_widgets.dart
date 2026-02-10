@@ -352,7 +352,6 @@ class CustomWidgets {
   }
 
   //app care
-
   static Future<void> handleAppUpdate(BuildContext context) async {
     final appCare = AppCare();
 
