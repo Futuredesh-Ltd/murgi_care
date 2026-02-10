@@ -153,7 +153,6 @@ class MyhomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // --- 3. Primary Action Buttons ---
                 Row(
                   children: [
                     Expanded(
@@ -181,7 +180,6 @@ class MyhomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                // --- 4. Footer Icons ---
                 const Divider(),
                 const SizedBox(height: 16),
                 Row(
@@ -216,7 +214,6 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // FIXED: Handles dynamic Map input correctly
   Widget buildResultCard(dynamic output, bool isEnglish) {
     String rawLabel = output['label'].toString();
     String cleanId = _getCleanId(rawLabel);
