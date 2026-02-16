@@ -1,5 +1,5 @@
-import 'package:murgi_care/controller.dart';
-import 'package:murgi_care/myHome_screen.dart';
+import 'package:murgi_care/controller/controller.dart';
+import 'package:murgi_care/view/myHome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Murgi Care',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
       home: MyhomeScreen(),
     );
