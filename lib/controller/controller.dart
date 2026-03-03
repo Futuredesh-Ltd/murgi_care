@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:murgi_care/view/auth_screen.dart';
 import 'package:murgi_care/view/camera_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -91,8 +92,10 @@ class DiseaseProvider extends ChangeNotifier {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
             onPressed: () {
               Navigator.pop(context);
-              // Navigate to your Auth/Login Screen here
-              // Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AuthScreen()),
+              );
             },
             child: Text(_isEnglish ? "Login / Register" : "লগইন / রেজিস্টার"),
           ),

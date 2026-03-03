@@ -254,12 +254,9 @@ class AuthScreen extends StatelessWidget {
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: () {
-          if (_emailController.text.isNotEmpty) {
-            AuthService().resetPassword(_emailController.text.trim());
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text("Reset link sent")));
-          }
+          // Read the email from the controller and send it to the provider
+          final email = _emailController.text.trim();
+          context.read<AuthProvider>().sendPasswordReset(context, email);
         },
         child: Text(
           isEnglish ? "Forgot Password?" : "পাসওয়ার্ড ভুলে গেছেন?",
