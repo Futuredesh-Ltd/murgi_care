@@ -13,6 +13,15 @@ class AuthProvider extends ChangeNotifier {
   File? _selectedImage;
   String _selectedUserType = 'Farmer';
   String _selectedGender = 'Male';
+  //pass visbility
+
+  bool _obscurePassword = true;
+  bool get obscurePassword => _obscurePassword;
+
+  void togglePasswordVisibility() {
+    _obscurePassword = !_obscurePassword;
+    notifyListeners();
+  }
 
   // Getters
   bool get isLogin => _isLogin;

@@ -60,16 +60,18 @@ class AuthScreen extends StatelessWidget {
                             _buildImagePicker(context, auth, isEnglish),
                           const SizedBox(height: 20),
                           _buildTextField(
+                            auth, // Pass auth here
                             _emailController,
                             isEnglish ? "Email" : "ইমেইল",
                             Icons.email,
                           ),
                           const SizedBox(height: 15),
                           _buildTextField(
+                            auth, // Pass auth here
                             _passwordController,
                             isEnglish ? "Password" : "পাসওয়ার্ড",
                             Icons.lock,
-                            obscure: true,
+                            isPassword: true, // Use visibility toggle logic
                           ),
 
                           if (auth.isLogin)
@@ -78,12 +80,14 @@ class AuthScreen extends StatelessWidget {
                           if (!auth.isLogin) ...[
                             const SizedBox(height: 15),
                             _buildTextField(
+                              auth, // Pass auth here
                               _nameController,
                               isEnglish ? "Full Name" : "পুরো নাম",
                               Icons.person,
                             ),
                             const SizedBox(height: 15),
                             _buildTextField(
+                              auth, // Pass auth here
                               _phoneController,
                               isEnglish ? "Phone" : "ফোন",
                               Icons.phone,
@@ -91,6 +95,7 @@ class AuthScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 15),
                             _buildTextField(
+                              auth, // Pass auth here
                               _addressController,
                               isEnglish ? "Address" : "ঠিকানা",
                               Icons.home,
@@ -265,25 +270,41 @@ class AuthScreen extends StatelessWidget {
   }
 
   Widget _buildTextField(
+    AuthProvider auth,
     TextEditingController ctrl,
     String label,
     IconData icon, {
-    bool obscure = false,
+    bool isPassword = false,
     TextInputType type = TextInputType.text,
   }) {
     return TextFormField(
       controller: ctrl,
-      obscureText: obscure,
+      obscureText: isPassword ? auth.obscurePassword : false,
       keyboardType: type,
-      decoration: _inputDeco(label, icon),
+      decoration: _inputDeco(
+        label,
+        icon,
+        suffix: isPassword
+            ? IconButton(
+                icon: Icon(
+                  auth.obscurePassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: Colors.teal,
+                ),
+                onPressed: () => auth.togglePasswordVisibility(),
+              )
+            : null,
+      ),
       validator: (val) => val!.isEmpty ? "Required" : null,
     );
   }
 
-  InputDecoration _inputDeco(String label, IconData icon) {
+  InputDecoration _inputDeco(String label, IconData icon, {Widget? suffix}) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: Colors.teal),
+      suffixIcon: suffix,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
       filled: true,
       fillColor: Colors.grey.shade50,
