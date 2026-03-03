@@ -3,7 +3,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:murgi_care/controller/auth_controller.dart';
 import 'package:provider/provider.dart';
 import '../controller/controller.dart';
-import '../services/auth_service.dart';
 
 class AuthScreen extends StatelessWidget {
   AuthScreen({super.key});
@@ -201,7 +200,7 @@ class AuthScreen extends StatelessWidget {
       items: [
         'Farmer',
         'Vet',
-        'Expert',
+        'dealer',
         'Other',
       ].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
       onChanged: (val) => auth.setUserType(val!),
