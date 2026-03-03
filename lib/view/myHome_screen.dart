@@ -374,6 +374,8 @@ class MyhomeScreen extends StatelessWidget {
                     );
                   },
                 ),
+
+                SizedBox(height: 40),
               ],
             ),
           );
