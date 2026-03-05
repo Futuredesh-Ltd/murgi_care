@@ -182,27 +182,35 @@ class AuthScreen extends StatelessWidget {
 
   Widget _buildGenderDropdown(AuthProvider auth, bool isEnglish) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       value: auth.selectedGender,
       decoration: _inputDeco(isEnglish ? "Gender" : "লিঙ্গ", Icons.people),
-      items: [
-        'Male',
-        'Female',
-        'Other',
-      ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+      items: ['Male', 'Female', 'Other']
+          .map(
+            (g) => DropdownMenuItem(
+              value: g,
+              child: Text(g, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(),
       onChanged: (val) => auth.setGender(val!),
     );
   }
 
   Widget _buildUserTypeDropdown(AuthProvider auth, bool isEnglish) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       value: auth.selectedUserType,
       decoration: _inputDeco(isEnglish ? "Type" : "ধরণ", Icons.work),
-      items: [
-        'Farmer',
-        'Vet',
-        'dealer',
-        'Other',
-      ].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+      items: ['Farmer', 'Vet', 'dealer', 'Other']
+          .map(
+            (t) => DropdownMenuItem(
+              value: t,
+              child: Text(t, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(),
+      // FIXED: Changed setGender to setUserType
       onChanged: (val) => auth.setUserType(val!),
     );
   }
@@ -327,10 +335,10 @@ class AuthScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: Text(isEnglish ? 'Camera' : 'ক্যামেরা'),
+              title: Text(isEnglish ? 'Open Camera' : 'ক্যামেরা খুলুন'),
               onTap: () {
                 Navigator.pop(context);
-                auth.pickImage(ImageSource.camera);
+                auth.openInAppCamera(context); // Calls our new custom screen
               },
             ),
           ],

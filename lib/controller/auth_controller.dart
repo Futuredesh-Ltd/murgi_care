@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:murgi_care/view/widgets/in_app_camera.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -49,6 +50,19 @@ class AuthProvider extends ChangeNotifier {
     );
     if (pickedFile != null) {
       _selectedImage = File(pickedFile.path);
+      notifyListeners();
+    }
+  }
+
+  // Update this method in your AuthProvider
+  Future<void> openInAppCamera(BuildContext context) async {
+    final File? result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const InAppCameraScreen()),
+    );
+
+    if (result != null) {
+      _selectedImage = result;
       notifyListeners();
     }
   }
