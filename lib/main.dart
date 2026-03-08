@@ -4,6 +4,7 @@ import 'package:murgi_care/controller/controller.dart';
 import 'package:murgi_care/services/auth_service.dart';
 import 'package:murgi_care/view/myHome_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:murgi_care/view/widgets/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Murgi Care',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: MyhomeScreen(),
+      home: SplashScreen(),
     );
   }
 }
