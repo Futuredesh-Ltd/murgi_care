@@ -6,10 +6,11 @@ import 'package:murgi_care/view/myHome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:murgi_care/view/widgets/splash_screen.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     MultiProvider(
       providers: [
