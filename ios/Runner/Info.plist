@@ -51,5 +51,7 @@
     <string>MurgiCare may use the microphone for future features like recording short videos of poultry behavior or sounds.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Allows you to select photos of poultry or droppings from your library for AI diagnosis.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app requires microphone access to monitor device health and audio diagnostic features.</string>
 </dict>
 </plist>
