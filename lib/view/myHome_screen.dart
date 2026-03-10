@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:murgi_care/model/dissease_info.dart';
+import 'package:murgi_care/view/auth_screen.dart';
 import 'package:murgi_care/view/widgets/custom_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -206,6 +208,174 @@ class MyhomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
+
+                // --- 3. Authentication Status Section ---
+                StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  builder: (context, snapshot) {
+                    bool isLoggedIn = snapshot.hasData && snapshot.data != null;
+
+                    if (isLoggedIn) {
+                      // --- LOGGED IN UI ---
+                      return Container(
+                        margin: const EdgeInsets.only(top: 20),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.teal.shade50,
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.teal,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    provider.isEnglish
+                                        ? "Active Account"
+                                        : "সক্রিয় অ্যাকাউন্ট",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    snapshot.data?.email ?? "",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () async {
+                                await FirebaseAuth.instance.signOut();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        provider.isEnglish
+                                            ? "Logged Out"
+                                            : "লগ আউট হয়েছে",
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.logout,
+                                size: 18,
+                                color: Colors.redAccent,
+                              ),
+                              label: Text(
+                                provider.isEnglish ? "Logout" : "লগ আউট",
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // --- GUEST / LOGGED OUT UI ---
+                    return Container(
+                      margin: const EdgeInsets.only(top: 20),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.teal.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.lock_open_rounded,
+                                size: 18,
+                                color: Colors.teal,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                provider.isEnglish
+                                    ? "Want unlimited health checks?"
+                                    : "আনলিমিটেড স্বাস্থ্য পরীক্ষা করতে চান?",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          InkWell(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => AuthScreen()),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: provider.isEnglish
+                                          ? "Please "
+                                          : "দয়া করে সার্ভিসটি আনলক করতে ",
+                                    ),
+                                    TextSpan(
+                                      text: provider.isEnglish
+                                          ? "Login or Sign Up"
+                                          : "লগইন বা সাইন আপ",
+                                      style: const TextStyle(
+                                        color: Colors.teal,
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: provider.isEnglish
+                                          ? " to unlock full service."
+                                          : " করুন।",
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+                SizedBox(height: 40),
               ],
             ),
           );

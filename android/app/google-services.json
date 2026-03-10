@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "363803162516",
+    "project_id": "murgicare",
+    "storage_bucket": "murgicare.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363803162516:android:00189c55997416f3414181",
+        "android_client_info": {
+          "package_name": "com.futuredesh.murgi_care"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1XwKgIYz-MnQH-vPIdoxSoaLabs9I1mQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
