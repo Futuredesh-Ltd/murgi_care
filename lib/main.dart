@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:murgi_care/controller/auth_controller.dart';
 import 'package:murgi_care/controller/controller.dart';
 import 'package:murgi_care/services/auth_service.dart';
-import 'package:murgi_care/view/myHome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:murgi_care/view/widgets/splash_screen.dart';
 import 'package:provider/provider.dart';
