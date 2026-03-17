@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:murgi_care/model/dissease_info.dart';
 import 'package:murgi_care/view/auth_screen.dart';
+import 'package:murgi_care/view/profile_screen.dart';
 import 'package:murgi_care/view/widgets/custom_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -210,88 +211,80 @@ class MyhomeScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // --- 3. Authentication Status Section ---
+                // --- 3. Authentication Status Section ---
                 StreamBuilder<User?>(
                   stream: FirebaseAuth.instance.authStateChanges(),
                   builder: (context, snapshot) {
                     bool isLoggedIn = snapshot.hasData && snapshot.data != null;
 
                     if (isLoggedIn) {
-                      // --- LOGGED IN UI ---
-                      return Container(
-                        margin: const EdgeInsets.only(top: 20),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
+                      // --- LOGGED IN UI: Clickable Profile Header ---
+                      return InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProfileScreen(),
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.teal.shade50,
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.teal,
-                              ),
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 20),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.teal.withOpacity(0.2),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    provider.isEnglish
-                                        ? "Active Account"
-                                        : "সক্রিয় অ্যাকাউন্ট",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  Text(
-                                    snapshot.data?.email ?? "",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () async {
-                                await FirebaseAuth.instance.signOut();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        provider.isEnglish
-                                            ? "Logged Out"
-                                            : "লগ আউট হয়েছে",
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.logout,
-                                size: 18,
-                                color: Colors.redAccent,
-                              ),
-                              label: Text(
-                                provider.isEnglish ? "Logout" : "লগ আউট",
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 12,
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              // Fetch user image from Firestore in a sub-stream or just use an icon
+                              CircleAvatar(
+                                backgroundColor: Colors.teal.shade50,
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Colors.teal,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      provider.isEnglish
+                                          ? "My Profile"
+                                          : "আমার প্রোফাইল",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      snapshot.data?.email ?? "",
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 16,
+                                color: Colors.teal,
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }
