@@ -17,6 +17,7 @@ class MyhomeScreen extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       CustomWidgets.handleAppUpdate(context);
     });
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -70,7 +71,7 @@ class MyhomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // --- 1. Image Display Card ---
+                // Image Display Card
                 Container(
                   height: 300,
                   decoration: BoxDecoration(
@@ -113,7 +114,7 @@ class MyhomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                // --- 2. Logic: Result Section ---
+                // Result Section
                 if (provider.loading)
                   const Column(
                     children: [
@@ -154,7 +155,7 @@ class MyhomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // --- 5. Action Buttons ---
+                // Action Buttons (Camera + Gallery)
                 Row(
                   children: [
                     Expanded(
@@ -182,6 +183,8 @@ class MyhomeScreen extends StatelessWidget {
 
                 const Divider(),
                 const SizedBox(height: 16),
+
+                // Footer Items
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -207,11 +210,11 @@ class MyhomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 25),
 
-                // --- 6. Auth Status ---
+                // Auth Section
                 _buildAuthSection(provider),
                 const SizedBox(height: 40),
 
-                // --- 7. NEW: Smart Tools Section (Calculators) ---
+                // Smart Poultry Tools
                 _buildGuideHeader(
                   provider.isEnglish,
                   Icons.calculate_rounded,
@@ -245,7 +248,7 @@ class MyhomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                // --- 3. Poultry Management Quick Guide ---
+                // Poultry Management Quick Guide
                 _buildGuideHeader(
                   provider.isEnglish,
                   Icons.menu_book_rounded,
@@ -292,51 +295,63 @@ class MyhomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
 
-                // --- 4. NEW: Farm Tips & Bio-Security Section ---
+                // Quick Disease Prevention Tips (Replaced old Farming Tips)
                 _buildGuideHeader(
                   provider.isEnglish,
-                  Icons.tips_and_updates_rounded,
-                  provider.isEnglish ? "Smart Farming Tips" : "ফার্মিং টিপস",
+                  Icons.shield_outlined,
+                  provider.isEnglish
+                      ? "Quick Prevention Tips"
+                      : "দ্রুত প্রতিরোধ টিপস",
                 ),
                 const SizedBox(height: 12),
-                _buildTipTile(
-                  icon: Icons.water_drop_rounded,
+                _buildPreventionTipTile(
+                  icon: Icons.cleaning_services_rounded,
                   title: provider.isEnglish
-                      ? "Water Purification"
-                      : "পানি পরিশোধন",
+                      ? "Daily Cleaning"
+                      : "প্রতিদিন পরিষ্কার",
                   subtitle: provider.isEnglish
-                      ? "Chlorine & Bleaching mix"
-                      : "ব্লিচিং ও ক্লোরিন মিশ্রণ",
-                  color: Colors.blueAccent,
-                  onTap: () =>
-                      _showDetailedTip(context, provider.isEnglish, "water"),
+                      ? "Clean feeders & drinkers daily"
+                      : "খাবার ও পানির পাত্র প্রতিদিন পরিষ্কার করুন",
+                  color: Colors.blue,
+                  onTap: () => _showPreventionDetail(
+                    context,
+                    provider.isEnglish,
+                    "cleaning",
+                  ),
                 ),
-                _buildTipTile(
-                  icon: Icons.house_rounded,
+                _buildPreventionTipTile(
+                  icon: Icons.people_outline_rounded,
                   title: provider.isEnglish
-                      ? "House Orientation"
-                      : "ঘর নির্মাণ পদ্ধতি",
+                      ? "Limit Visitors"
+                      : "ভিজিটর নিয়ন্ত্রণ",
                   subtitle: provider.isEnglish
-                      ? "East-West Ventilation"
-                      : "পূর্ব-পশ্চিম সঠিক ভেন্টিলেশন",
-                  color: Colors.brown,
-                  onTap: () =>
-                      _showDetailedTip(context, provider.isEnglish, "house"),
+                      ? "Restrict unnecessary farm visits"
+                      : "অপ্রয়োজনীয় লোকজনের প্রবেশ নিয়ন্ত্রণ করুন",
+                  color: Colors.purple,
+                  onTap: () => _showPreventionDetail(
+                    context,
+                    provider.isEnglish,
+                    "visitors",
+                  ),
                 ),
-                _buildTipTile(
-                  icon: Icons.security_rounded,
-                  title: provider.isEnglish ? "Bio-Security" : "জৈব নিরাপত্তা",
+                _buildPreventionTipTile(
+                  icon: Icons.sick_outlined,
+                  title: provider.isEnglish
+                      ? "Isolate Sick Birds"
+                      : "অসুস্থ মুরগি আলাদা করুন",
                   subtitle: provider.isEnglish
-                      ? "Keep farm disease-free"
-                      : "খামার রোগমুক্ত রাখার উপায়",
-                  color: Colors.green,
-                  onTap: () =>
-                      _showDetailedTip(context, provider.isEnglish, "security"),
+                      ? "Separate sick birds immediately"
+                      : "অসুস্থ মুরগিকে তাৎক্ষণিক আলাদা করুন",
+                  color: Colors.redAccent,
+                  onTap: () => _showPreventionDetail(
+                    context,
+                    provider.isEnglish,
+                    "isolation",
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 40),
               ],
             ),
           );
@@ -345,7 +360,7 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- UI COMPONENTS ---
+  // ==================== UI COMPONENTS ====================
 
   Widget _buildGuideHeader(bool isEnglish, IconData icon, String title) {
     return Row(
@@ -441,7 +456,7 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTipTile({
+  Widget _buildPreventionTipTile({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -471,11 +486,12 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- INTERACTIVE TOOLS ---
+  // ==================== INTERACTIVE TOOLS ====================
 
   void _showFCRCalculator(BuildContext context, bool isEnglish) {
-    final TextEditingController feed = TextEditingController();
-    final TextEditingController weight = TextEditingController();
+    final feed = TextEditingController();
+    final weight = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -490,6 +506,7 @@ class MyhomeScreen extends StatelessWidget {
                 hintText: isEnglish ? "Total Feed (kg)" : "মোট খাদ্য (কেজি)",
               ),
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: weight,
               keyboardType: TextInputType.number,
@@ -508,7 +525,7 @@ class MyhomeScreen extends StatelessWidget {
             onPressed: () {
               double f = double.tryParse(feed.text) ?? 0;
               double w = double.tryParse(weight.text) ?? 1;
-              double res = f / w;
+              double res = w > 0 ? f / w : 0;
               Navigator.pop(context);
               _showResultDialog(
                 context,
@@ -526,8 +543,9 @@ class MyhomeScreen extends StatelessWidget {
   }
 
   void _showSpacePlanner(BuildContext context, bool isEnglish) {
-    final TextEditingController len = TextEditingController();
-    final TextEditingController wid = TextEditingController();
+    final len = TextEditingController();
+    final wid = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -542,6 +560,7 @@ class MyhomeScreen extends StatelessWidget {
                 hintText: isEnglish ? "Length (ft)" : "দৈর্ঘ্য (ফুট)",
               ),
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: wid,
               keyboardType: TextInputType.number,
@@ -601,7 +620,59 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- AUTH & DATA SHEETS ---
+  // Prevention Detail
+  void _showPreventionDetail(
+    BuildContext context,
+    bool isEnglish,
+    String type,
+  ) {
+    String title = "";
+    List<Widget> content = [];
+
+    if (type == "cleaning") {
+      title = isEnglish ? "Daily Cleaning Routine" : "প্রতিদিনের পরিষ্কার";
+      content = [
+        _listRow(
+          isEnglish ? "Feeders & Drinkers" : "খাবার ও পানির পাত্র",
+          isEnglish ? "Clean every day" : "প্রতিদিন পরিষ্কার",
+        ),
+        _listRow(
+          isEnglish ? "Disinfect" : "জীবাণুনাশক",
+          isEnglish
+              ? "Use approved disinfectant weekly"
+              : "সপ্তাহে একবার জীবাণুনাশক ব্যবহার করুন",
+        ),
+      ];
+    } else if (type == "visitors") {
+      title = isEnglish ? "Visitor & Biosecurity" : "ভিজিটর নিয়ন্ত্রণ";
+      content = [
+        _listRow(
+          isEnglish ? "Footbath" : "ফুটবাথ",
+          isEnglish ? "Use at entrance" : "প্রবেশপথে ব্যবহার করুন",
+        ),
+        _listRow(
+          isEnglish ? "Restriction" : "নিয়ম",
+          isEnglish ? "Minimize unnecessary entry" : "অপ্রয়োজনীয় প্রবেশ কমান",
+        ),
+      ];
+    } else if (type == "isolation") {
+      title = isEnglish ? "Sick Bird Isolation" : "অসুস্থ মুরগি আলাদা করা";
+      content = [
+        _listRow(
+          isEnglish ? "Immediate Action" : "তাৎক্ষণিক পদক্ষেপ",
+          isEnglish ? "Isolate sick birds" : "অসুস্থ মুরগি আলাদা করুন",
+        ),
+        _listRow(
+          isEnglish ? "Monitoring" : "পর্যবেক্ষণ",
+          isEnglish ? "Observe symptoms" : "লক্ষণ পর্যবেক্ষণ করুন",
+        ),
+      ];
+    }
+
+    _showSheet(context, title, content);
+  }
+
+  // ==================== AUTH & GUIDES ====================
 
   Widget _buildAuthSection(DiseaseProvider provider) {
     return StreamBuilder<User?>(
@@ -740,36 +811,15 @@ class MyhomeScreen extends StatelessWidget {
   }
 
   void _showTempGuide(BuildContext context, bool isEnglish) {
-    _showSheet(context, isEnglish ? "Brooding Temp" : "ব্রুডিং তাপমাত্রা", [
-      _tableRow("Week 1", "33-35°C", "95°F"),
-      _tableRow("Week 2", "32°C", "90°F"),
-      _tableRow("Week 3", "29°C", "85°F"),
-    ]);
-  }
-
-  void _showDetailedTip(BuildContext context, bool isEnglish, String type) {
-    String title = "";
-    List<Widget> content = [];
-    if (type == "water") {
-      title = isEnglish ? "Water Treatment" : "পানি পরিশোধন";
-      content = [
-        _listRow("Chlorine", "1 tablet / 500 L"),
-        _listRow("Bleaching", "3g / 100 L"),
-      ];
-    } else if (type == "house") {
-      title = isEnglish ? "House Setup" : "ঘর নির্মাণ";
-      content = [
-        _listRow("Width", "20-25 ft"),
-        _listRow("Direction", "East-West"),
-      ];
-    } else if (type == "security") {
-      title = isEnglish ? "Bio-Security" : "জৈব নিরাপত্তা";
-      content = [
-        _listRow("Footbath", "Gate usage"),
-        _listRow("Visitors", "No entry"),
-      ];
-    }
-    _showSheet(context, title, content);
+    _showSheet(
+      context,
+      isEnglish ? "Brooding Temperature" : "ব্রুডিং তাপমাত্রা",
+      [
+        _tableRow("Week 1", "33-35°C", "95°F"),
+        _tableRow("Week 2", "32°C", "90°F"),
+        _tableRow("Week 3", "29°C", "85°F"),
+      ],
+    );
   }
 
   void _showSheet(BuildContext context, String title, List<Widget> children) {
@@ -834,16 +884,19 @@ class MyhomeScreen extends StatelessWidget {
     );
   }
 
-  // --- CORE DETECTION LOGIC (UNCHANGED) ---
+  // ==================== CORE DETECTION LOGIC ====================
 
   Widget buildResultCard(dynamic output, bool isEnglish) {
     String rawLabel = output['label'].toString();
     String cleanId = _getCleanId(rawLabel);
     String formattedLabel = formatLabel(rawLabel, isEnglish);
     double confidence = (output['confidence'] as double) * 100;
+
     if (cleanId == 'others') return CustomWidgets.buildInvalidCard(isEnglish);
+
     bool isHealthy = cleanId == 'healthy';
     Color themeColor = isHealthy ? Colors.green : Colors.redAccent;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
@@ -878,8 +931,10 @@ class MyhomeScreen extends StatelessWidget {
   Widget _buildDiseaseInfo(String rawLabel, bool isEnglish) {
     String id = _getCleanId(rawLabel);
     if (id == "healthy" || id == 'others') return const SizedBox.shrink();
+
     final data = diseaseInfo[id];
     if (data == null) return const SizedBox.shrink();
+
     return Column(
       children: [
         CustomWidgets.buildInfoTile(
