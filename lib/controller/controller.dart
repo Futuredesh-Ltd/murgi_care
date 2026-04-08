@@ -4,13 +4,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:murgi_care/view/auth_screen.dart';
 import 'package:murgi_care/view/camera_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
 import 'package:camera/camera.dart';
 import 'package:image_cropper/image_cropper.dart';
+import '../services/subscription_service.dart';
+
+enum PickImageStatus {
+  success,
+  limitReached,
+  cancelled,
+}
 
 class DiseaseProvider extends ChangeNotifier {
   File? _image;
@@ -19,8 +25,10 @@ class DiseaseProvider extends ChangeNotifier {
   Interpreter? interpreter;
   List<String>? _labels;
   bool _isEnglish = false;
+  ThemeMode _themeMode = ThemeMode.system;
 
   // Getters
+  ThemeMode get themeMode => _themeMode;
   bool get isEnglish => _isEnglish;
   File? get image => _image;
   List<dynamic>? get outputs => _outputs;
@@ -45,6 +53,11 @@ class DiseaseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleTheme() {
+    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
+
   void reset() {
     _image = null;
     _outputs = null;
@@ -52,73 +65,25 @@ class DiseaseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- NEW: Freemium Logic ---
+  // --- Freemium Logic ---
 
-  Future<bool> canPerformDetection() async {
-    final user = FirebaseAuth.instance.currentUser;
-    // 1. Logged in users get unlimited access
-    if (user != null) return true;
+  final SubscriptionService _subscriptionService = SubscriptionService();
 
-    // 2. Guests check local storage count
-    final prefs = await SharedPreferences.getInstance();
-    int count = prefs.getInt('guest_detect_count') ?? 0;
-    return count < 5;
-  }
-
-  Future<void> incrementGuestCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    int count = prefs.getInt('guest_detect_count') ?? 0;
-    await prefs.setInt('guest_detect_count', count + 1);
-  }
-
-  void _showLoginDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(_isEnglish ? "Limit Reached" : "সীমা অতিক্রম করেছেন"),
-        content: Text(
-          _isEnglish
-              ? "You've used your 5 free detections. Please login for unlimited access."
-              : "আপনি ৫টি ফ্রি ট্রায়াল ব্যবহার করেছেন। আনলিমিটেড ব্যবহারের জন্য লগইন করুন।",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(_isEnglish ? "Cancel" : "বাতিল"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AuthScreen()),
-              );
-            },
-            child: Text(_isEnglish ? "Login / Register" : "লগইন / রেজিস্টার"),
-          ),
-        ],
-      ),
-    );
-  }
 
   // --- Main Pick Image Logic (Updated with Gatekeeper) ---
 
-  Future<void> pickImage(ImageSource source, BuildContext context) async {
+  Future<PickImageStatus> pickImage(ImageSource source, BuildContext context) async {
     // 1. Check Permissions/Limits first
-    bool allowed = await canPerformDetection();
+    bool allowed = await _subscriptionService.canPerformDetection();
     if (!allowed) {
-      _showLoginDialog(context);
-      return;
+      return PickImageStatus.limitReached;
     }
 
     File? initialFile;
     if (source == ImageSource.camera) {
       final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
-      initialFile = await Navigator.push(
+      if (cameras.isEmpty) return PickImageStatus.cancelled;
+      initialFile = await Navigator.push<File>(
         context,
         MaterialPageRoute(
           builder: (_) =>
@@ -131,10 +96,10 @@ class DiseaseProvider extends ChangeNotifier {
       if (pickedFile != null) initialFile = File(pickedFile.path);
     }
 
-    if (initialFile == null) return;
+    if (initialFile == null) return PickImageStatus.cancelled;
 
     final croppedFile = await _cropImage(initialFile.path);
-    if (croppedFile == null) return;
+    if (croppedFile == null) return PickImageStatus.cancelled;
 
     _image = File(croppedFile.path);
     _loading = true;
@@ -144,8 +109,9 @@ class DiseaseProvider extends ChangeNotifier {
 
     // 2. If detection was successful and user is guest, increment count
     if (FirebaseAuth.instance.currentUser == null) {
-      await incrementGuestCount();
+      await _subscriptionService.incrementGuestCount();
     }
+    return PickImageStatus.success;
   }
 
   // --- Cropping & Processing Logic ---
