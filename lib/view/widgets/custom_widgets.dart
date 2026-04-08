@@ -88,7 +88,7 @@ class CustomWidgets {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
+        color: Colors.amber.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.amber),
       ),
@@ -105,7 +105,7 @@ class CustomWidgets {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.brown,
+              color: Colors.amber,
             ),
           ),
           const SizedBox(height: 5),
@@ -114,7 +114,7 @@ class CustomWidgets {
                 ? "This doesn't look like chicken droppings. Please provide a valid image."
                 : "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে সঠিক ছবি দিন।",
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.brown),
+            style: const TextStyle(color: Colors.amber),
           ),
         ],
       ),
@@ -268,7 +268,6 @@ class CustomWidgets {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 12),

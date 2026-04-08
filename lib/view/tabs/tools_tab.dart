@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/fcr_calculator_dialog.dart';
 import '../widgets/space_planner_dialog.dart';
 import '../widgets/growth_chart.dart';
+import '../../model/article.dart';
+import '../article_screen.dart';
 
 class ToolsTab extends StatelessWidget {
   final bool isEnglish;
@@ -17,6 +19,7 @@ class ToolsTab extends StatelessWidget {
         children: [
           // Smart Poultry Tools
           _buildGuideHeader(
+            context,
             isEnglish,
             Icons.calculate_rounded,
             isEnglish ? "Smart Poultry Tools" : "স্মার্ট পোল্ট্রি টুলস",
@@ -47,6 +50,7 @@ class ToolsTab extends StatelessWidget {
 
           // Poultry Management Quick Guide
           _buildGuideHeader(
+            context,
             isEnglish,
             Icons.menu_book_rounded,
             isEnglish ? "Management Guide" : "ব্যবস্থাপনা গাইড",
@@ -92,56 +96,93 @@ class ToolsTab extends StatelessWidget {
 
           // Quick Disease Prevention Tips
           _buildGuideHeader(
+            context,
             isEnglish,
             Icons.shield_outlined,
             isEnglish ? "Quick Prevention Tips" : "দ্রুত প্রতিরোধ টিপস",
           ),
           const SizedBox(height: 12),
           _buildPreventionTipTile(
+            context,
             icon: Icons.cleaning_services_rounded,
             title: isEnglish ? "Daily Cleaning" : "প্রতিদিন পরিষ্কার",
-            subtitle: isEnglish ? "Clean feeders & drinkers daily" : "খাবার ও পানির পাত্র প্রতিদিন পরিষ্কার করুন",
+            subtitle: isEnglish
+                ? "Clean feeders & drinkers daily"
+                : "খাবার ও পানির পাত্র প্রতিদিন পরিষ্কার করুন",
             color: Colors.blue,
             onTap: () => _showPreventionDetail(context, isEnglish, "cleaning"),
           ),
           _buildPreventionTipTile(
+            context,
             icon: Icons.people_outline_rounded,
             title: isEnglish ? "Limit Visitors" : "ভিজিটর নিয়ন্ত্রণ",
-            subtitle: isEnglish ? "Restrict unnecessary visits" : "অপ্রয়োজনীয় লোকজনের প্রবেশ নিয়ন্ত্রণ করুন",
+            subtitle: isEnglish
+                ? "Restrict unnecessary visits"
+                : "অপ্রয়োজনীয় লোকজনের প্রবেশ নিয়ন্ত্রণ করুন",
             color: Colors.purple,
             onTap: () => _showPreventionDetail(context, isEnglish, "visitors"),
           ),
           _buildPreventionTipTile(
+            context,
             icon: Icons.sick_outlined,
             title: isEnglish ? "Isolate Sick Birds" : "অসুস্থ মুরগি আলাদা করুন",
-            subtitle: isEnglish ? "Separate sick birds immediately" : "অসুস্থ মুরগিকে তাৎক্ষণিক আলাদা করুন",
+            subtitle: isEnglish
+                ? "Separate sick birds immediately"
+                : "অসুস্থ মুরগিকে তাৎক্ষণিক আলাদা করুন",
             color: Colors.redAccent,
             onTap: () => _showPreventionDetail(context, isEnglish, "isolation"),
           ),
+          const SizedBox(height: 32),
+
+          // --- Blog / Knowledge Base Section ---
+          _buildGuideHeader(
+            context,
+            isEnglish,
+            Icons.article_rounded,
+            isEnglish ? "Poultry Knowledge Base" : "পোল্ট্রি ব্লগ",
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: Article.mockArticles.length,
+              itemBuilder: (context, index) {
+                final article = Article.mockArticles[index];
+                return _buildArticleCard(context, article, isEnglish);
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
   // --- UI Components ---
-  Widget _buildGuideHeader(bool isEnglish, IconData icon, String title) {
+  Widget _buildGuideHeader(BuildContext context, bool isEnglish, IconData icon, String title) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Colors.teal),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Theme.of(context).textTheme.titleMedium?.color,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildToolCard({required IconData icon, required String title, required Color color, required VoidCallback onTap}) {
+  Widget _buildToolCard({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
@@ -160,7 +201,11 @@ class ToolsTab extends StatelessWidget {
             Flexible(
               child: Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 13,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -170,7 +215,13 @@ class ToolsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildGuideCard(BuildContext context, {required IconData icon, required String title, required Color color, required VoidCallback onTap}) {
+  Widget _buildGuideCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -189,53 +240,171 @@ class ToolsTab extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPreventionTipTile({required IconData icon, required String title, required String subtitle, required Color color, required VoidCallback onTap}) {
+  Widget _buildPreventionTipTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
       child: ListTile(
         onTap: onTap,
-        leading: CircleAvatar(backgroundColor: color.withOpacity(0.1), child: Icon(icon, color: color)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.1),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
         trailing: const Icon(Icons.chevron_right_rounded),
       ),
     );
   }
 
+  Widget _buildArticleCard(
+    BuildContext context,
+    Article article,
+    bool isEnglish,
+  ) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ArticleScreen(article: article, isEnglish: isEnglish),
+        ),
+      ),
+      child: Container(
+        width: 250,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).dividerColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              child: Image.network(
+                article.imageUrl,
+                height: 110,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 110,
+                  width: double.infinity,
+                  color: Colors.grey.shade300,
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isEnglish ? article.titleEn : article.titleBn,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "${article.author} • ${article.readTime}",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showFCRCalculator(BuildContext context, bool isEnglish) {
-    showDialog(context: context, builder: (_) => FcrCalculatorDialog(isEnglish: isEnglish));
+    showDialog(
+      context: context,
+      builder: (_) => FcrCalculatorDialog(isEnglish: isEnglish),
+    );
   }
 
   void _showSpacePlanner(BuildContext context, bool isEnglish) {
-    showDialog(context: context, builder: (_) => SpacePlannerDialog(isEnglish: isEnglish));
+    showDialog(
+      context: context,
+      builder: (_) => SpacePlannerDialog(isEnglish: isEnglish),
+    );
   }
 
   void _showGrowthChart(BuildContext context, bool isEnglish) {
-    _showSheet(
-        context, 
-        isEnglish ? "Growth Tracking" : "বৃদ্ধি ট্র্যাকিং", 
-        [GrowthChart(isEnglish: isEnglish)]
-    );
+    _showSheet(context, isEnglish ? "Growth Tracking" : "বৃদ্ধি ট্র্যাকিং", [
+      GrowthChart(isEnglish: isEnglish),
+    ]);
   }
 
   void _showVaccineSchedule(BuildContext context, bool isEnglish) {
     _showSheet(context, isEnglish ? "Vaccination List" : "টিকাদান তালিকা", [
-      _listRow("Day 1", isEnglish ? "IB (Live) - Eye Drop" : "আইবি (লাইভ) - চোখে ড্রপ"),
-      _listRow("Day 3-5", isEnglish ? "ND/Ranikhet - Eye Drop" : "রানীক্ষেত - চোখে ড্রপ"),
-      _listRow("Day 10-12", isEnglish ? "IBD/Gumboro - Eye Drop" : "গামবোরো - চোখে ড্রপ"),
-      _listRow("Day 22-24", isEnglish ? "ND/Ranikhet - Water" : "রানীক্ষেত - পানির সাথে"),
+      _listRow(
+        "Day 1",
+        isEnglish ? "IB (Live) - Eye Drop" : "আইবি (লাইভ) - চোখে ড্রপ",
+      ),
+      _listRow(
+        "Day 3-5",
+        isEnglish ? "ND/Ranikhet - Eye Drop" : "রানীক্ষেত - চোখে ড্রপ",
+      ),
+      _listRow(
+        "Day 10-12",
+        isEnglish ? "IBD/Gumboro - Eye Drop" : "গামবোরো - চোখে ড্রপ",
+      ),
+      _listRow(
+        "Day 22-24",
+        isEnglish ? "ND/Ranikhet - Water" : "রানীক্ষেত - পানির সাথে",
+      ),
     ]);
   }
 
@@ -256,7 +425,11 @@ class ToolsTab extends StatelessWidget {
     ]);
   }
 
-  void _showPreventionDetail(BuildContext context, bool isEnglish, String type) {
+  void _showPreventionDetail(
+    BuildContext context,
+    bool isEnglish,
+    String type,
+  ) {
     String title = "";
     List<Widget> content = [];
 
@@ -306,14 +479,22 @@ class ToolsTab extends StatelessWidget {
   void _showSheet(BuildContext context, String title, List<Widget> children) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
       builder: (_) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 16),
               ...children,
             ],
@@ -328,7 +509,10 @@ class ToolsTab extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(t1, style: const TextStyle(fontWeight: FontWeight.bold)), Text(t2)],
+        children: [
+          Text(t1, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(t2),
+        ],
       ),
     );
   }
