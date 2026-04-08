@@ -121,7 +121,8 @@ class CustomWidgets {
     );
   }
 
-  static Widget buildInfoTile({
+  static Widget buildInfoTile(
+    BuildContext context, {
     required String title,
     required String content,
     required IconData icon,
@@ -130,7 +131,7 @@ class CustomWidgets {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -170,7 +171,6 @@ class CustomWidgets {
                 style: const TextStyle(
                   fontSize: 15,
                   height: 1.6,
-                  color: Colors.black87,
                 ),
               ),
             ],
