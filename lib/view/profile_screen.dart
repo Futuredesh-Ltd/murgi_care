@@ -13,7 +13,7 @@ class ProfileScreen extends StatelessWidget {
     final isEnglish = context.read<DiseaseProvider>().isEnglish;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Light background for contrast
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Light background for contrast
       appBar: AppBar(
         title: Text(isEnglish ? "My Profile" : "আমার প্রোফাইল"),
         centerTitle: true,
@@ -113,7 +113,7 @@ class ProfileScreen extends StatelessWidget {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: Colors.grey.shade200),
+                          side: BorderSide(color: Theme.of(context).dividerColor),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -216,7 +216,6 @@ class ProfileScreen extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
               ),
             ),
           ],
