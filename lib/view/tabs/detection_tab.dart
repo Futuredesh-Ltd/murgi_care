@@ -359,11 +359,14 @@ class _DetectionTabState extends State<DetectionTab> {
               children: [
                 const Icon(Icons.info_outline_rounded, size: 16, color: Colors.teal),
                 const SizedBox(width: 8),
-                Text(
-                  provider.isEnglish 
-                      ? "Individual Result (Photo ${_selectedPhotoIndex! + 1})" 
-                      : "ব্যক্তিগত ফলাফল (ফটো ${_selectedPhotoIndex! + 1})",
-                  style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    provider.isEnglish 
+                        ? "Individual Result (Photo ${_selectedPhotoIndex! + 1})" 
+                        : "ব্যক্তিগত ফলাফল (ফটো ${_selectedPhotoIndex! + 1})",
+                    style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const Spacer(),
                 TextButton(
