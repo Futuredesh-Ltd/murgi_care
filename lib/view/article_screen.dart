@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../model/article.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ArticleScreen extends StatelessWidget {
   final Article article;
@@ -124,12 +126,22 @@ class ArticleScreen extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              article.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: Colors.teal.shade200,
-                child: const Icon(Icons.broken_image, size: 50, color: Colors.white),
+            Hero(
+              tag: 'article_image_${article.id}',
+              child: CachedNetworkImage(
+                imageUrl: article.imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    color: Colors.white,
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.teal.shade200,
+                  child: const Icon(Icons.broken_image, size: 50, color: Colors.white),
+                ),
               ),
             ),
             // Gradient to ensure back button is visible
