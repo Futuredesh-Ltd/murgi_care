@@ -16,63 +16,80 @@ class ToolsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 24),
           // Smart Poultry Tools
-          _buildGuideHeader(
-            context,
-            isEnglish,
-            Icons.calculate_rounded,
-            isEnglish ? "Smart Poultry Tools" : "স্মার্ট পোল্ট্রি টুলস",
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildGuideHeader(
+              context,
+              isEnglish,
+              Icons.calculate_rounded,
+              isEnglish ? "Smart Poultry Tools" : "স্মার্ট পোল্ট্রি টুলস",
+            ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildToolCard(
-                  icon: Icons.speed_rounded,
-                  title: isEnglish ? "FCR Check" : "এফসিআর চেক",
-                  color: Colors.purple,
-                  onTap: () => _showFCRCalculator(context, isEnglish),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildToolCard(
+                    icon: Icons.speed_rounded,
+                    title: isEnglish ? "FCR Check" : "এফসিআর চেক",
+                    color: Colors.purple,
+                    onTap: () => _showFCRCalculator(context, isEnglish),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildToolCard(
-                  icon: Icons.grid_view_rounded,
-                  title: isEnglish ? "Capacity" : "ধারণক্ষমতা",
-                  color: Colors.deepOrange,
-                  onTap: () => _showSpacePlanner(context, isEnglish),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildToolCard(
+                    icon: Icons.grid_view_rounded,
+                    title: isEnglish ? "Capacity" : "ধারণক্ষমতা",
+                    color: Colors.deepOrange,
+                    onTap: () => _showSpacePlanner(context, isEnglish),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 32),
+
           // Vet Helpline Section
-          _buildGuideHeader(
-            context,
-            isEnglish,
-            Icons.support_agent_rounded,
-            isEnglish ? "Vet Helpline" : "পশুচিকিৎসক হেল্পলাইন",
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildGuideHeader(
+              context,
+              isEnglish,
+              Icons.support_agent_rounded,
+              isEnglish ? "Vet Helpline" : "পশুচিকিৎসক হেল্পলাইন",
+            ),
           ),
           const SizedBox(height: 12),
-          _buildVetHelplineCard(context, isEnglish),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildVetHelplineCard(context, isEnglish),
+          ),
           const SizedBox(height: 32),
 
           // Poultry Management Quick Guide
-          _buildGuideHeader(
-            context,
-            isEnglish,
-            Icons.menu_book_rounded,
-            isEnglish ? "Management Guide" : "ব্যবস্থাপনা গাইড",
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildGuideHeader(
+              context,
+              isEnglish,
+              Icons.menu_book_rounded,
+              isEnglish ? "Management Guide" : "ব্যবস্থাপনা গাইড",
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             height: 110,
             child: ListView(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               children: [
                 _buildGuideCard(
                   context,
@@ -108,57 +125,71 @@ class ToolsTab extends StatelessWidget {
           const SizedBox(height: 32),
 
           // Quick Disease Prevention Tips
-          _buildGuideHeader(
-            context,
-            isEnglish,
-            Icons.shield_outlined,
-            isEnglish ? "Quick Prevention Tips" : "দ্রুত প্রতিরোধ টিপস",
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildGuideHeader(
+              context,
+              isEnglish,
+              Icons.shield_outlined,
+              isEnglish ? "Quick Prevention Tips" : "দ্রুত প্রতিরোধ টিপস",
+            ),
           ),
           const SizedBox(height: 12),
-          _buildPreventionTipTile(
-            context,
-            icon: Icons.cleaning_services_rounded,
-            title: isEnglish ? "Daily Cleaning" : "প্রতিদিন পরিষ্কার",
-            subtitle: isEnglish
-                ? "Clean feeders & drinkers daily"
-                : "খাবার ও পানির পাত্র প্রতিদিন পরিষ্কার করুন",
-            color: Colors.blue,
-            onTap: () => _showPreventionDetail(context, isEnglish, "cleaning"),
-          ),
-          _buildPreventionTipTile(
-            context,
-            icon: Icons.people_outline_rounded,
-            title: isEnglish ? "Limit Visitors" : "ভিজিটর নিয়ন্ত্রণ",
-            subtitle: isEnglish
-                ? "Restrict unnecessary visits"
-                : "অপ্রয়োজনীয় লোকজনের প্রবেশ নিয়ন্ত্রণ করুন",
-            color: Colors.purple,
-            onTap: () => _showPreventionDetail(context, isEnglish, "visitors"),
-          ),
-          _buildPreventionTipTile(
-            context,
-            icon: Icons.sick_outlined,
-            title: isEnglish ? "Isolate Sick Birds" : "অসুস্থ মুরগি আলাদা করুন",
-            subtitle: isEnglish
-                ? "Separate sick birds immediately"
-                : "অসুস্থ মুরগিকে তাৎক্ষণিক আলাদা করুন",
-            color: Colors.redAccent,
-            onTap: () => _showPreventionDetail(context, isEnglish, "isolation"),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              children: [
+                _buildPreventionTipTile(
+                  context,
+                  icon: Icons.cleaning_services_rounded,
+                  title: isEnglish ? "Daily Cleaning" : "প্রতিদিন পরিষ্কার",
+                  subtitle: isEnglish
+                      ? "Clean feeders & drinkers daily"
+                      : "খাবার ও পানির পাত্র প্রতিদিন পরিষ্কার করুন",
+                  color: Colors.blue,
+                  onTap: () => _showPreventionDetail(context, isEnglish, "cleaning"),
+                ),
+                _buildPreventionTipTile(
+                  context,
+                  icon: Icons.people_outline_rounded,
+                  title: isEnglish ? "Limit Visitors" : "ভিজিটর নিয়ন্ত্রণ",
+                  subtitle: isEnglish
+                      ? "Restrict unnecessary visits"
+                      : "অপ্রয়োজনীয় লোকজনের প্রবেশ নিয়ন্ত্রণ করুন",
+                  color: Colors.purple,
+                  onTap: () => _showPreventionDetail(context, isEnglish, "visitors"),
+                ),
+                _buildPreventionTipTile(
+                  context,
+                  icon: Icons.sick_outlined,
+                  title: isEnglish ? "Isolate Sick Birds" : "অসুস্থ মুরগি আলাদা করুন",
+                  subtitle: isEnglish
+                      ? "Separate sick birds immediately"
+                      : "অসুস্থ মুরগিকে তাৎক্ষণিক আলাদা করুন",
+                  color: Colors.redAccent,
+                  onTap: () => _showPreventionDetail(context, isEnglish, "isolation"),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 32),
 
           // --- Blog / Knowledge Base Section ---
-          _buildGuideHeader(
-            context,
-            isEnglish,
-            Icons.article_rounded,
-            isEnglish ? "Poultry Knowledge Base" : "পোল্ট্রি ব্লগ",
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildGuideHeader(
+              context,
+              isEnglish,
+              Icons.article_rounded,
+              isEnglish ? "Poultry Knowledge Base" : "পোল্ট্রি ব্লগ",
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             height: 200,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               itemCount: Article.mockArticles.length,
               itemBuilder: (context, index) {
                 final article = Article.mockArticles[index];
@@ -166,7 +197,7 @@ class ToolsTab extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
         ],
       ),
     );
