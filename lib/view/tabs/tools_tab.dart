@@ -6,6 +6,7 @@ import '../../model/article.dart';
 import '../article_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ToolsTab extends StatelessWidget {
   final bool isEnglish;
@@ -48,6 +49,16 @@ class ToolsTab extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 32),
+          // Vet Helpline Section
+          _buildGuideHeader(
+            context,
+            isEnglish,
+            Icons.support_agent_rounded,
+            isEnglish ? "Vet Helpline" : "পশুচিকিৎসক হেল্পলাইন",
+          ),
+          const SizedBox(height: 12),
+          _buildVetHelplineCard(context, isEnglish),
           const SizedBox(height: 32),
 
           // Poultry Management Quick Guide
@@ -516,6 +527,121 @@ class ToolsTab extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildVetHelplineCard(BuildContext context, bool isEnglish) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.teal.shade700, Colors.teal.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.teal.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isEnglish ? "Consult a Veterinarian" : "পশুচিকিৎসকের পরামর্শ নিন",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      isEnglish ? "Expert help for your flock" : "আপনার খামারের জন্য বিশেষজ্ঞ সহায়তা",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          InkWell(
+            onTap: () => _launchWhatsApp(context, isEnglish),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.chat_bubble_rounded, color: Colors.teal, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    isEnglish ? "Chat on WhatsApp" : "হোয়াটসঅ্যাপে চ্যাট করুন",
+                    style: const TextStyle(
+                      color: Colors.teal,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchWhatsApp(BuildContext context, bool isEnglish) async {
+    const String phoneNumber = "+8801234567890"; // Placeholder number
+    final String message = isEnglish 
+        ? "Hello, I need some help with my poultry flock." 
+        : "হ্যালো, আমার পোল্ট্রি খামারের জন্য কিছু সহায়তা প্রয়োজন।";
+    
+    final Uri whatsappUri = Uri.parse("whatsapp://send?phone=$phoneNumber&text=${Uri.encodeFull(message)}");
+    
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        await launchUrl(whatsappUri);
+      } else {
+        // Fallback to web link if app is not installed
+        final Uri webUri = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}");
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isEnglish ? "Could not launch WhatsApp" : "হোয়াটসঅ্যাপ চালু করা যায়নি"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   Widget _listRow(String t1, String t2) {
