@@ -574,7 +574,7 @@ class _DetectionTabState extends State<DetectionTab> {
             ),
           ],
         ),
-      child: Column(
+        child: Column(
         children: [
           Text(
             formattedLabel,
