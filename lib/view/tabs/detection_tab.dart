@@ -278,10 +278,12 @@ class _DetectionTabState extends State<DetectionTab> {
   }
 
   Widget _buildSummaryCard(BuildContext context, MultiAnalysisResult multi, bool isEnglish) {
-     return GestureDetector(
-       onTap: () => setState(() => _showResults = true),
-       child: Container(
-         padding: const EdgeInsets.all(24),
+     return Center(
+       child: GestureDetector(
+         onTap: () => setState(() => _showResults = true),
+         child: Container(
+           width: double.infinity,
+           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
          decoration: BoxDecoration(
            gradient: LinearGradient(
              colors: [Colors.teal, Colors.teal.shade700],
@@ -350,8 +352,8 @@ class _DetectionTabState extends State<DetectionTab> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (isAggregated) ...[
-            _buildStatusBadge(context, multi, provider.isEnglish),
-            const SizedBox(height: 16),
+            Center(child: _buildStatusBadge(context, multi, provider.isEnglish)),
+            const SizedBox(height: 20),
           ] else ...[
             Row(
               children: [
@@ -454,13 +456,22 @@ class _DetectionTabState extends State<DetectionTab> {
     Color themeColor = isHealthy ? Colors.green : Colors.redAccent;
     Color bgColor = isHealthy ? Colors.green.withOpacity(0.1) : Colors.redAccent.withOpacity(0.1);
 
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: isSmall ? 16 : 24, horizontal: 16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: themeColor.withOpacity(0.2)),
-      ),
+    return Center(
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: isSmall ? 20 : 32, horizontal: 24),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: themeColor.withOpacity(0.3), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: themeColor.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
       child: Column(
         children: [
           Text(
