@@ -68,10 +68,7 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: _buildAppBar(context, provider),
-          body: IndexedStack(
-            index: _currentIndex,
-            children: tabs,
-          ),
+          body: IndexedStack(index: _currentIndex, children: tabs),
           bottomNavigationBar: _buildBottomNav(context, provider.isEnglish),
         );
       },
@@ -87,12 +84,14 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
               tooltip: provider.isEnglish ? "Reset" : "রিসেট",
             )
           : const SizedBox.shrink(),
-      title: const Text(
+      title: Text(
         'MurgiCare Detector',
         style: TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 18,
-          color: Color.fromARGB(255, 8, 63, 9),
+          color: Theme.of(context).brightness == Brightness.light
+              ? const Color.fromARGB(255, 8, 63, 9)
+              : const Color(0xFF4ADE80),
         ),
       ),
       centerTitle: true,
@@ -103,7 +102,10 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
           onPressed: () => provider.toggleLanguage(),
           child: Text(
             provider.isEnglish ? "বাংলা" : "ENG",
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.teal,
+            ),
           ),
         ),
       ],
@@ -118,7 +120,11 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
         ],
       ),
       child: BottomNavigationBar(
