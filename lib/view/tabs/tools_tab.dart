@@ -4,6 +4,8 @@ import '../widgets/space_planner_dialog.dart';
 import '../widgets/growth_chart.dart';
 import '../../model/article.dart';
 import '../article_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ToolsTab extends StatelessWidget {
   final bool isEnglish;
@@ -319,18 +321,30 @@ class ToolsTab extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
-              child: Image.network(
-                article.imageUrl,
-                height: 110,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+              child: Hero(
+                tag: 'article_image_${article.id}',
+                child: CachedNetworkImage(
+                  imageUrl: article.imageUrl,
                   height: 110,
                   width: double.infinity,
-                  color: Colors.grey.shade300,
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      height: 110,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 110,
+                    width: double.infinity,
+                    color: Colors.grey.shade300,
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ),
