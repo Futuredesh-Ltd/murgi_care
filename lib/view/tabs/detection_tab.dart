@@ -8,15 +8,27 @@ import 'package:murgi_care/model/dissease_info.dart';
 import 'package:lottie/lottie.dart';
 import '../widgets/animated_action_button.dart';
 
-class DetectionTab extends StatelessWidget {
+class DetectionTab extends StatefulWidget {
   final Future<void> Function(BuildContext, bool) showLoginDialog;
 
   const DetectionTab({super.key, required this.showLoginDialog});
 
   @override
+  State<DetectionTab> createState() => _DetectionTabState();
+}
+
+class _DetectionTabState extends State<DetectionTab> {
+  int? _selectedPhotoIndex;
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<DiseaseProvider>(
       builder: (context, provider, child) {
+        // Reset selection if new analysis starts
+        if (provider.loading || provider.image == null) {
+          _selectedPhotoIndex = null;
+        }
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -44,7 +56,7 @@ class DetectionTab extends StatelessWidget {
                             ImageSource.camera, context);
                         if (status == PickImageStatus.limitReached &&
                             context.mounted) {
-                          showLoginDialog(context, provider.isEnglish);
+                          widget.showLoginDialog(context, provider.isEnglish);
                         }
                       },
                     ),
@@ -60,7 +72,7 @@ class DetectionTab extends StatelessWidget {
                             ImageSource.gallery, context);
                         if (status == PickImageStatus.limitReached &&
                             context.mounted) {
-                          showLoginDialog(context, provider.isEnglish);
+                          widget.showLoginDialog(context, provider.isEnglish);
                         }
                       },
                     ),
@@ -147,6 +159,10 @@ class DetectionTab extends StatelessWidget {
       );
     }
 
+    final displayImage = _selectedPhotoIndex != null 
+        ? provider.images[_selectedPhotoIndex!] 
+        : provider.image!;
+
     return Column(
       children: [
         // Main Image
@@ -164,32 +180,53 @@ class DetectionTab extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: Image.file(provider.image!, fit: BoxFit.cover),
+            child: Image.file(displayImage, fit: BoxFit.cover),
           ),
         ),
         if (provider.images.length > 1) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: provider.images.map((imgFile) {
-              bool isSelected = imgFile.path == provider.image?.path;
-              return Container(
-                width: 60,
-                height: 60,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected ? Colors.teal : Colors.transparent,
-                    width: 2,
+            children: List.generate(provider.images.length, (index) {
+              bool isSelected = _selectedPhotoIndex == index;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (_selectedPhotoIndex == index) {
+                      _selectedPhotoIndex = null; // Deselect to show summary
+                    } else {
+                      _selectedPhotoIndex = index;
+                    }
+                  });
+                },
+                child: Container(
+                  width: 65,
+                  height: 65,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? Colors.teal : Colors.transparent,
+                      width: 3,
+                    ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 8)
+                    ] : null,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: Image.file(provider.images[index], fit: BoxFit.cover),
                   ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.file(imgFile, fit: BoxFit.cover),
-                ),
               );
-            }).toList(),
+            }),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            provider.isEnglish 
+                ? (_selectedPhotoIndex == null ? "Click an image to see individual result" : "Showing result for photo ${_selectedPhotoIndex! + 1}")
+                : (_selectedPhotoIndex == null ? "ব্যক্তিগত ফলাফল দেখতে ছবিতে ক্লিক করুন" : "ফটো ${_selectedPhotoIndex! + 1} এর ফলাফল দেখানো হচ্ছে"),
+            style: TextStyle(fontSize: 12, color: Colors.teal.withOpacity(0.8), fontWeight: FontWeight.w500),
           ),
         ],
       ],
@@ -215,27 +252,55 @@ class DetectionTab extends StatelessWidget {
 
     if (provider.multiResult != null) {
       final multi = provider.multiResult!;
+      
+      // Determine what to show: Selected photo result OR Aggregated summary
+      final resultToShow = _selectedPhotoIndex != null 
+          ? multi.individualResults[_selectedPhotoIndex!]
+          : multi.primary;
+
+      final isAggregated = _selectedPhotoIndex == null;
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Aggregated Status badge
-          _buildStatusBadge(context, multi, provider.isEnglish),
-          const SizedBox(height: 16),
+          // Aggregated Status badge (only if showing summary)
+          if (isAggregated) ...[
+            _buildStatusBadge(context, multi, provider.isEnglish),
+            const SizedBox(height: 16),
+          ] else ...[
+            Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 16, color: Colors.teal),
+                const SizedBox(width: 8),
+                Text(
+                  provider.isEnglish 
+                      ? "Individual Result (Photo ${_selectedPhotoIndex! + 1})" 
+                      : "ব্যক্তিগত ফলাফল (ফটো ${_selectedPhotoIndex! + 1})",
+                  style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => setState(() => _selectedPhotoIndex = null),
+                  child: Text(provider.isEnglish ? "Show Summary" : "সারসংক্ষেপ দেখুন", style: const TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+          ],
 
           // Result Cards
-          if (multi.type == ResultType.inconclusive)
+          if (isAggregated && multi.type == ResultType.inconclusive)
             ...multi.results.map((res) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildSingleResultCard(context, res, provider.isEnglish, isSmall: true),
                 ))
           else
-            _buildSingleResultCard(context, multi.primary, provider.isEnglish),
+            _buildSingleResultCard(context, resultToShow, provider.isEnglish),
 
           const SizedBox(height: 24),
-          // Info for the top result
+          // Info for the shown result
           _buildDiseaseInfo(
             context,
-            multi.primary.label,
+            resultToShow.label,
             provider.isEnglish,
           ),
         ],
@@ -267,6 +332,8 @@ class DetectionTab extends StatelessWidget {
       ),
     );
   }
+
+  // --- UI Components ---
 
   Widget _buildStatusBadge(BuildContext context, MultiAnalysisResult result, bool isEnglish) {
     Color color;
