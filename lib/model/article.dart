@@ -26,7 +26,7 @@ class Article {
       titleBn: "ডিম উৎপাদন বৃদ্ধির ৫টি উপায়",
       author: "MurgiCare Experts",
       readTime: "4 min read",
-      imageUrl: "https://plus.unsplash.com/premium_photo-1661962383796-03f47e0be305?w=1000&auto=format&fit=crop&q=60",
+      imageUrl: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=80&w=1000",
       contentEn: '''Increasing your flock's egg production doesn't happen overnight, but following proper management techniques can drastically improve your yield over time.
 
 1. High-Quality Feed
@@ -66,7 +66,7 @@ Provide crushed oyster shells on the side to give them the extra calcium require
       titleBn: "ব্রয়লার পুষ্টি ব্যবস্থাপনা",
       author: "Dr. A. Rahman",
       readTime: "6 min read",
-      imageUrl: "https://images.unsplash.com/photo-1516733220456-9159d28d052a?w=1000&auto=format&fit=crop&q=60",
+      imageUrl: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&q=80&w=1000",
       contentEn: '''Broiler nutrition is the cornerstone of a profitable poultry business. Formulating the perfect diet means understanding the energy and protein requirements at each stage of a bird's life.
 
 Pre-Starter Phase (Day 0-14)
@@ -94,7 +94,7 @@ Protein drops further down to 18%-19%, but the energy density hits its peak to f
       titleBn: "শীতকালে মুরগির যত্ন",
       author: "MurgiCare Experts",
       readTime: "5 min read",
-      imageUrl: "https://images.unsplash.com/photo-1543329753-4809bc662e08?w=1000&auto=format&fit=crop&q=60",
+      imageUrl: "https://images.unsplash.com/photo-1569058242252-623df46b5025?auto=format&fit=crop&q=80&w=1000",
       contentEn: '''Winter can be harsh on your flock. Preparing your coop before the first freeze is essential to prevent cold stress, frostbite, and respiratory diseases.
 
 1. Draft-Free, Not Airtight
