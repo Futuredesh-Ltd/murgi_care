@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:murgi_care/model/dissease_info.dart';
 import 'package:lottie/lottie.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/animated_action_button.dart';
 
 class DetectionTab extends StatefulWidget {
@@ -284,57 +285,58 @@ class _DetectionTabState extends State<DetectionTab> {
          child: Container(
            width: double.infinity,
            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-         decoration: BoxDecoration(
-           gradient: LinearGradient(
-             colors: [Colors.teal, Colors.teal.shade700],
-             begin: Alignment.topLeft,
-             end: Alignment.bottomRight,
+           decoration: BoxDecoration(
+             gradient: LinearGradient(
+               colors: [Colors.teal, Colors.teal.shade700],
+               begin: Alignment.topLeft,
+               end: Alignment.bottomRight,
+             ),
+             borderRadius: BorderRadius.circular(20),
+             boxShadow: [
+               BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+             ],
            ),
-           borderRadius: BorderRadius.circular(20),
-           boxShadow: [
-             BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
-           ],
-         ),
-         child: Column(
-           children: [
-             Container(
-               padding: const EdgeInsets.all(12),
-               decoration: BoxDecoration(
-                 color: Colors.white.withOpacity(0.2),
-                 shape: BoxShape.circle,
+           child: Column(
+             children: [
+               Container(
+                 padding: const EdgeInsets.all(12),
+                 decoration: BoxDecoration(
+                   color: Colors.white.withOpacity(0.2),
+                   shape: BoxShape.circle,
+                 ),
+                 child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 32),
                ),
-               child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 32),
-             ),
-             const SizedBox(height: 16),
-             Text(
-               isEnglish ? "Analysis Successful" : "বিশ্লেষণ সফল হয়েছে",
-               style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-             ),
-             const SizedBox(height: 8),
-             Text(
-               isEnglish ? "Complete Diagnostic Summary" : "সম্পূর্ণ ডায়াগনস্টিক সারসংক্ষেপ",
-               style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
-             ),
-             const SizedBox(height: 20),
-             Container(
-               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-               decoration: BoxDecoration(
-                 color: Colors.white,
-                 borderRadius: BorderRadius.circular(30),
+               const SizedBox(height: 16),
+               Text(
+                 isEnglish ? "Analysis Successful" : "বিশ্লেষণ সফল হয়েছে",
+                 style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                ),
-               child: Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   Text(
-                     isEnglish ? "View Results" : "ফলাফল দেখুন",
-                     style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
-                   ),
-                   const SizedBox(width: 8),
-                   const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 18),
-                 ],
+               const SizedBox(height: 8),
+               Text(
+                 isEnglish ? "Complete Diagnostic Summary" : "সম্পূর্ণ ডায়াগনস্টিক সারসংক্ষেপ",
+                 style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
                ),
-             ),
-           ],
+               const SizedBox(height: 20),
+               Container(
+                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                 decoration: BoxDecoration(
+                   color: Colors.white,
+                   borderRadius: BorderRadius.circular(30),
+                 ),
+                 child: Row(
+                   mainAxisSize: MainAxisSize.min,
+                   children: [
+                     Text(
+                       isEnglish ? "View Results" : "ফলাফল দেখুন",
+                       style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+                     ),
+                     const SizedBox(width: 8),
+                     const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 18),
+                   ],
+                 ),
+               ),
+             ],
+           ),
          ),
        ),
      );
@@ -347,6 +349,9 @@ class _DetectionTabState extends State<DetectionTab> {
           ? multi.individualResults[_selectedPhotoIndex!]
           : multi.primary;
       final isAggregated = _selectedPhotoIndex == null;
+
+      final diagnosisId = _getCleanId(resultToShow.label);
+      final isDisease = diagnosisId != "healthy" && diagnosisId != "others";
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -387,18 +392,112 @@ class _DetectionTabState extends State<DetectionTab> {
 
           const SizedBox(height: 24),
           _buildDiseaseInfo(context, resultToShow.label, provider.isEnglish),
+
+          if (isDisease) ...[
+            const SizedBox(height: 16),
+            _buildVetConsultationCard(context, provider.isEnglish),
+          ],
         ],
       );
     } else {
       // Legacy Single Photo logic
+      final label = provider.outputs![0]['label'].toString();
+      final diagnosisId = _getCleanId(label);
+      final isDisease = diagnosisId != "healthy" && diagnosisId != "others";
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildResultCardLegacy(context, provider.outputs![0], provider.isEnglish),
           const SizedBox(height: 24),
-          _buildDiseaseInfo(context, provider.outputs![0]['label'].toString(), provider.isEnglish),
+          _buildDiseaseInfo(context, label, provider.isEnglish),
+          if (isDisease) ...[
+            const SizedBox(height: 16),
+            _buildVetConsultationCard(context, provider.isEnglish),
+          ],
         ],
       );
+    }
+  }
+
+  Widget _buildVetConsultationCard(BuildContext context, bool isEnglish) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.teal.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.teal.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.chat_bubble_rounded, color: Colors.teal, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isEnglish ? "Need Expert Advice?" : "বিশেষজ্ঞের পরামর্শ প্রয়োজন?",
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      isEnglish ? "Consult a Vet on WhatsApp" : "হোয়াটসঅ্যাপে বিশেষজ্ঞের সাথে কথা বলুন",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _launchWhatsApp(context, isEnglish),
+              icon: const Icon(Icons.phone_outlined, size: 18),
+              label: Text(isEnglish ? "Contact Veterinarian" : "পশুচিকিৎসকের সাথে যোগাযোগ করুন"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchWhatsApp(BuildContext context, bool isEnglish) async {
+    const String phoneNumber = "+8801575115194";
+    final String message = isEnglish
+        ? "Hello, I need some help with my poultry flock."
+        : "হ্যালো, আমার খামারের মুরগির জন্য কিছু সাহায্য প্রয়োজন।";
+    
+    final Uri whatsappUri = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}");
+
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(isEnglish ? "Could not launch WhatsApp" : "হোয়াটসঅ্যাপ খোলা সম্ভব হচ্ছে না")),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("WhatsApp launch error: $e");
     }
   }
 
@@ -497,6 +596,7 @@ class _DetectionTabState extends State<DetectionTab> {
           ),
         ],
       ),
+    ),
     );
   }
 
