@@ -173,7 +173,12 @@ class ToolsTab extends StatelessWidget {
   }
 
   // --- UI Components ---
-  Widget _buildGuideHeader(BuildContext context, bool isEnglish, IconData icon, String title) {
+  Widget _buildGuideHeader(
+    BuildContext context,
+    bool isEnglish,
+    IconData icon,
+    String title,
+  ) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Colors.teal),
@@ -558,7 +563,11 @@ class ToolsTab extends StatelessWidget {
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.medical_services_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -566,7 +575,9 @@ class ToolsTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isEnglish ? "Consult a Veterinarian" : "পশুচিকিৎসকের পরামর্শ নিন",
+                      isEnglish
+                          ? "Consult a Veterinarian"
+                          : "পশুচিকিৎসকের পরামর্শ নিন",
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -574,7 +585,9 @@ class ToolsTab extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      isEnglish ? "Expert help for your flock" : "আপনার খামারের জন্য বিশেষজ্ঞ সহায়তা",
+                      isEnglish
+                          ? "Expert help for your flock"
+                          : "আপনার খামারের জন্য বিশেষজ্ঞ সহায়তা",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 14,
@@ -597,7 +610,11 @@ class ToolsTab extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.chat_bubble_rounded, color: Colors.teal, size: 20),
+                  const Icon(
+                    Icons.chat_bubble_rounded,
+                    color: Colors.teal,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     isEnglish ? "Chat on WhatsApp" : "হোয়াটসঅ্যাপে চ্যাট করুন",
@@ -617,26 +634,34 @@ class ToolsTab extends StatelessWidget {
   }
 
   Future<void> _launchWhatsApp(BuildContext context, bool isEnglish) async {
-    const String phoneNumber = "+8801234567890"; // Placeholder number
-    final String message = isEnglish 
-        ? "Hello, I need some help with my poultry flock." 
+    const String phoneNumber = "+8801575115194";
+    final String message = isEnglish
+        ? "Hello, I need some help with my poultry flock."
         : "হ্যালো, আমার পোল্ট্রি খামারের জন্য কিছু সহায়তা প্রয়োজন।";
-    
-    final Uri whatsappUri = Uri.parse("whatsapp://send?phone=$phoneNumber&text=${Uri.encodeFull(message)}");
-    
+
+    final Uri whatsappUri = Uri.parse(
+      "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeFull(message)}",
+    );
+
     try {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri);
       } else {
         // Fallback to web link if app is not installed
-        final Uri webUri = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}");
+        final Uri webUri = Uri.parse(
+          "https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}",
+        );
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? "Could not launch WhatsApp" : "হোয়াটসঅ্যাপ চালু করা যায়নি"),
+            content: Text(
+              isEnglish
+                  ? "Could not launch WhatsApp"
+                  : "হোয়াটসঅ্যাপ চালু করা যায়নি",
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -649,9 +674,21 @@ class ToolsTab extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t1, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(t2),
+          Flexible(
+            child: Text(
+              t1,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              t2,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );
