@@ -19,6 +19,7 @@ class DetectionTab extends StatefulWidget {
 
 class _DetectionTabState extends State<DetectionTab> {
   int? _selectedPhotoIndex;
+  bool _showResults = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +28,7 @@ class _DetectionTabState extends State<DetectionTab> {
         // Reset selection if new analysis starts
         if (provider.loading || provider.image == null) {
           _selectedPhotoIndex = null;
+          _showResults = false;
         }
 
         return SingleChildScrollView(
@@ -192,8 +194,9 @@ class _DetectionTabState extends State<DetectionTab> {
               return GestureDetector(
                 onTap: () {
                   setState(() {
+                    _showResults = true; // Auto reveal when thumbnail clicked
                     if (_selectedPhotoIndex == index) {
-                      _selectedPhotoIndex = null; // Deselect to show summary
+                      _selectedPhotoIndex = null; // Toggle off individual
                     } else {
                       _selectedPhotoIndex = index;
                     }
@@ -224,8 +227,8 @@ class _DetectionTabState extends State<DetectionTab> {
           const SizedBox(height: 8),
           Text(
             provider.isEnglish 
-                ? (_selectedPhotoIndex == null ? "Click an image to see individual result" : "Showing result for photo ${_selectedPhotoIndex! + 1}")
-                : (_selectedPhotoIndex == null ? "ব্যক্তিগত ফলাফল দেখতে ছবিতে ক্লিক করুন" : "ফটো ${_selectedPhotoIndex! + 1} এর ফলাফল দেখানো হচ্ছে"),
+                ? (_selectedPhotoIndex == null ? "Select photo to see individual result" : "Photo ${_selectedPhotoIndex! + 1} Selected")
+                : (_selectedPhotoIndex == null ? "ব্যক্তিগত ফলাফল দেখতে ফটো নির্বাচন করুন" : "ফটো ${_selectedPhotoIndex! + 1} নির্বাচিত"),
             style: TextStyle(fontSize: 12, color: Colors.teal.withOpacity(0.8), fontWeight: FontWeight.w500),
           ),
         ],
@@ -251,19 +254,101 @@ class _DetectionTabState extends State<DetectionTab> {
     }
 
     if (provider.multiResult != null) {
+      return AnimatedCrossFade(
+        firstChild: _buildSummaryCard(context, provider.multiResult!, provider.isEnglish),
+        secondChild: _buildDetailedResults(context, provider),
+        crossFadeState: _showResults ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+        duration: const Duration(milliseconds: 400),
+      );
+    }
+
+    if (provider.outputs != null && provider.outputs!.isNotEmpty) {
+       return _buildDetailedResults(context, provider);
+    }
+
+    return Center(
+      child: Text(
+        provider.isEnglish
+            ? "Take 3 photos for higher accuracy"
+            : "নির্ভুল ফলাফলের জন্য ৩টি ছবি তুলুন",
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 15, color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(BuildContext context, MultiAnalysisResult multi, bool isEnglish) {
+     return GestureDetector(
+       onTap: () => setState(() => _showResults = true),
+       child: Container(
+         padding: const EdgeInsets.all(24),
+         decoration: BoxDecoration(
+           gradient: LinearGradient(
+             colors: [Colors.teal, Colors.teal.shade700],
+             begin: Alignment.topLeft,
+             end: Alignment.bottomRight,
+           ),
+           borderRadius: BorderRadius.circular(20),
+           boxShadow: [
+             BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+           ],
+         ),
+         child: Column(
+           children: [
+             Container(
+               padding: const EdgeInsets.all(12),
+               decoration: BoxDecoration(
+                 color: Colors.white.withOpacity(0.2),
+                 shape: BoxShape.circle,
+               ),
+               child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 32),
+             ),
+             const SizedBox(height: 16),
+             Text(
+               isEnglish ? "Analysis Successful" : "বিশ্লেষণ সফল হয়েছে",
+               style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+             ),
+             const SizedBox(height: 8),
+             Text(
+               isEnglish ? "Complete Diagnostic Summary" : "সম্পূর্ণ ডায়াগনস্টিক সারসংক্ষেপ",
+               style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+             ),
+             const SizedBox(height: 20),
+             Container(
+               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+               decoration: BoxDecoration(
+                 color: Colors.white,
+                 borderRadius: BorderRadius.circular(30),
+               ),
+               child: Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   Text(
+                     isEnglish ? "View Results" : "ফলাফল দেখুন",
+                     style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+                   ),
+                   const SizedBox(width: 8),
+                   const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 18),
+                 ],
+               ),
+             ),
+           ],
+         ),
+       ),
+     );
+  }
+
+  Widget _buildDetailedResults(BuildContext context, DiseaseProvider provider) {
+    if (provider.multiResult != null) {
       final multi = provider.multiResult!;
-      
-      // Determine what to show: Selected photo result OR Aggregated summary
       final resultToShow = _selectedPhotoIndex != null 
           ? multi.individualResults[_selectedPhotoIndex!]
           : multi.primary;
-
       final isAggregated = _selectedPhotoIndex == null;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Aggregated Status badge (only if showing summary)
           if (isAggregated) ...[
             _buildStatusBadge(context, multi, provider.isEnglish),
             const SizedBox(height: 16),
@@ -287,7 +372,6 @@ class _DetectionTabState extends State<DetectionTab> {
             ),
           ],
 
-          // Result Cards
           if (isAggregated && multi.type == ResultType.inconclusive)
             ...multi.results.map((res) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -297,40 +381,20 @@ class _DetectionTabState extends State<DetectionTab> {
             _buildSingleResultCard(context, resultToShow, provider.isEnglish),
 
           const SizedBox(height: 24),
-          // Info for the shown result
-          _buildDiseaseInfo(
-            context,
-            resultToShow.label,
-            provider.isEnglish,
-          ),
+          _buildDiseaseInfo(context, resultToShow.label, provider.isEnglish),
         ],
       );
-    }
-
-    if (provider.outputs != null && provider.outputs!.isNotEmpty) {
+    } else {
+      // Legacy Single Photo logic
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildResultCardLegacy(context, provider.outputs![0], provider.isEnglish),
           const SizedBox(height: 24),
-          _buildDiseaseInfo(
-            context,
-            provider.outputs![0]['label'].toString(),
-            provider.isEnglish,
-          ),
+          _buildDiseaseInfo(context, provider.outputs![0]['label'].toString(), provider.isEnglish),
         ],
       );
     }
-
-    return Center(
-      child: Text(
-        provider.isEnglish
-            ? "Take 3 photos for higher accuracy"
-            : "নির্ভুল ফলাফলের জন্য ৩টি ছবি তুলুন",
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 15, color: Colors.grey),
-      ),
-    );
   }
 
   // --- UI Components ---
