@@ -109,10 +109,10 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
           ),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1.0),
-        child: Container(color: Theme.of(context).dividerColor, height: 1.0),
-      ),
+      // bottom: PreferredSize(
+      //   preferredSize: const Size.fromHeight(1.0),
+      //   child: Container(color: Theme.of(context).dividerColor, height: 1.0),
+      // ),
     );
   }
 
