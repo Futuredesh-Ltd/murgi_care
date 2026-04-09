@@ -665,24 +665,25 @@ class ToolsTab extends StatelessWidget {
   }
 
   Future<void> _launchWhatsApp(BuildContext context, bool isEnglish) async {
-    const String phoneNumber = "+8801575115194";
+    const String phoneNumber = "8801575115194"; // Remove '+' for wa.me links
     final String message = isEnglish
         ? "Hello, I need some help with my poultry flock."
         : "হ্যালো, আমার পোল্ট্রি খামারের জন্য কিছু সহায়তা প্রয়োজন।";
 
-    final Uri whatsappUri = Uri.parse(
+    final Uri whatsappAppUri = Uri.parse(
       "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeFull(message)}",
+    );
+    final Uri webUri = Uri.parse(
+      "https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}",
     );
 
     try {
-      if (await canLaunchUrl(whatsappUri)) {
-        await launchUrl(whatsappUri);
-      } else {
-        // Fallback to web link if app is not installed
-        final Uri webUri = Uri.parse(
-          "https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}",
-        );
+      if (await canLaunchUrl(whatsappAppUri)) {
+        await launchUrl(whatsappAppUri);
+      } else if (await canLaunchUrl(webUri)) {
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch WhatsApp';
       }
     } catch (e) {
       if (context.mounted) {

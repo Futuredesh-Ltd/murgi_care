@@ -56,7 +56,9 @@ class _DetectionTabState extends State<DetectionTab> {
                       color: Colors.teal,
                       onTap: () async {
                         final status = await provider.pickMultipleImages(
-                            ImageSource.camera, context);
+                          ImageSource.camera,
+                          context,
+                        );
                         if (status == PickImageStatus.limitReached &&
                             context.mounted) {
                           widget.showLoginDialog(context, provider.isEnglish);
@@ -72,7 +74,9 @@ class _DetectionTabState extends State<DetectionTab> {
                       color: Colors.indigo,
                       onTap: () async {
                         final status = await provider.pickMultipleImages(
-                            ImageSource.gallery, context);
+                          ImageSource.gallery,
+                          context,
+                        );
                         if (status == PickImageStatus.limitReached &&
                             context.mounted) {
                           widget.showLoginDialog(context, provider.isEnglish);
@@ -104,10 +108,8 @@ class _DetectionTabState extends State<DetectionTab> {
                     icon: Icons.info_outline,
                     label: provider.isEnglish ? "About" : "তথ্য",
                     color: Colors.indigo,
-                    onTap: () => CustomWidgets.showAboutUs(
-                      context,
-                      provider.isEnglish,
-                    ),
+                    onTap: () =>
+                        CustomWidgets.showAboutUs(context, provider.isEnglish),
                   ),
                 ],
               ),
@@ -162,8 +164,8 @@ class _DetectionTabState extends State<DetectionTab> {
       );
     }
 
-    final displayImage = _selectedPhotoIndex != null 
-        ? provider.images[_selectedPhotoIndex!] 
+    final displayImage = _selectedPhotoIndex != null
+        ? provider.images[_selectedPhotoIndex!]
         : provider.image!;
 
     return Column(
@@ -176,9 +178,10 @@ class _DetectionTabState extends State<DetectionTab> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4)),
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: ClipRRect(
@@ -213,13 +216,21 @@ class _DetectionTabState extends State<DetectionTab> {
                       color: isSelected ? Colors.teal : Colors.transparent,
                       width: 3,
                     ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 8)
-                    ] : null,
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Colors.teal.withOpacity(0.3),
+                              blurRadius: 8,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(7),
-                    child: Image.file(provider.images[index], fit: BoxFit.cover),
+                    child: Image.file(
+                      provider.images[index],
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               );
@@ -227,10 +238,18 @@ class _DetectionTabState extends State<DetectionTab> {
           ),
           const SizedBox(height: 8),
           Text(
-            provider.isEnglish 
-                ? (_selectedPhotoIndex == null ? "Select photo to see individual result" : "Photo ${_selectedPhotoIndex! + 1} Selected")
-                : (_selectedPhotoIndex == null ? "ব্যক্তিগত ফলাফল দেখতে ফটো নির্বাচন করুন" : "ফটো ${_selectedPhotoIndex! + 1} নির্বাচিত"),
-            style: TextStyle(fontSize: 12, color: Colors.teal.withOpacity(0.8), fontWeight: FontWeight.w500),
+            provider.isEnglish
+                ? (_selectedPhotoIndex == null
+                      ? "Select photo to see individual result"
+                      : "Photo ${_selectedPhotoIndex! + 1} Selected")
+                : (_selectedPhotoIndex == null
+                      ? "ব্যক্তিগত ফলাফল দেখতে ফটো নির্বাচন করুন"
+                      : "ফটো ${_selectedPhotoIndex! + 1} নির্বাচিত"),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.teal.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ],
@@ -241,13 +260,12 @@ class _DetectionTabState extends State<DetectionTab> {
     if (provider.loading) {
       return Column(
         children: [
-          const CircularProgressIndicator(
-            strokeWidth: 3,
-            color: Colors.teal,
-          ),
+          const CircularProgressIndicator(strokeWidth: 3, color: Colors.teal),
           const SizedBox(height: 16),
           Text(
-            provider.isEnglish ? "Analyzing 3 photos..." : "৩টি ছবি বিশ্লেষণ করা হচ্ছে...",
+            provider.isEnglish
+                ? "Analyzing 3 photos..."
+                : "৩টি ছবি বিশ্লেষণ করা হচ্ছে...",
             style: const TextStyle(color: Colors.grey),
           ),
         ],
@@ -256,15 +274,21 @@ class _DetectionTabState extends State<DetectionTab> {
 
     if (provider.multiResult != null) {
       return AnimatedCrossFade(
-        firstChild: _buildSummaryCard(context, provider.multiResult!, provider.isEnglish),
+        firstChild: _buildSummaryCard(
+          context,
+          provider.multiResult!,
+          provider.isEnglish,
+        ),
         secondChild: _buildDetailedResults(context, provider),
-        crossFadeState: _showResults ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+        crossFadeState: _showResults
+            ? CrossFadeState.showSecond
+            : CrossFadeState.showFirst,
         duration: const Duration(milliseconds: 400),
       );
     }
 
     if (provider.outputs != null && provider.outputs!.isNotEmpty) {
-       return _buildDetailedResults(context, provider);
+      return _buildDetailedResults(context, provider);
     }
 
     return Center(
@@ -278,74 +302,105 @@ class _DetectionTabState extends State<DetectionTab> {
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context, MultiAnalysisResult multi, bool isEnglish) {
-     return Center(
-       child: GestureDetector(
-         onTap: () => setState(() => _showResults = true),
-         child: Container(
-           width: double.infinity,
-           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-           decoration: BoxDecoration(
-             gradient: LinearGradient(
-               colors: [Colors.teal, Colors.teal.shade700],
-               begin: Alignment.topLeft,
-               end: Alignment.bottomRight,
-             ),
-             borderRadius: BorderRadius.circular(20),
-             boxShadow: [
-               BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
-             ],
-           ),
-           child: Column(
-             children: [
-               Container(
-                 padding: const EdgeInsets.all(12),
-                 decoration: BoxDecoration(
-                   color: Colors.white.withOpacity(0.2),
-                   shape: BoxShape.circle,
-                 ),
-                 child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 32),
-               ),
-               const SizedBox(height: 16),
-               Text(
-                 isEnglish ? "Analysis Successful" : "বিশ্লেষণ সফল হয়েছে",
-                 style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-               ),
-               const SizedBox(height: 8),
-               Text(
-                 isEnglish ? "Complete Diagnostic Summary" : "সম্পূর্ণ ডায়াগনস্টিক সারসংক্ষেপ",
-                 style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
-               ),
-               const SizedBox(height: 20),
-               Container(
-                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                 decoration: BoxDecoration(
-                   color: Colors.white,
-                   borderRadius: BorderRadius.circular(30),
-                 ),
-                 child: Row(
-                   mainAxisSize: MainAxisSize.min,
-                   children: [
-                     Text(
-                       isEnglish ? "View Results" : "ফলাফল দেখুন",
-                       style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
-                     ),
-                     const SizedBox(width: 8),
-                     const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 18),
-                   ],
-                 ),
-               ),
-             ],
-           ),
-         ),
-       ),
-     );
+  Widget _buildSummaryCard(
+    BuildContext context,
+    MultiAnalysisResult multi,
+    bool isEnglish,
+  ) {
+    return Center(
+      child: GestureDetector(
+        onTap: () => setState(() => _showResults = true),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.teal, Colors.teal.shade700],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.teal.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.analytics_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isEnglish ? "Analysis Successful" : "বিশ্লেষণ সফল হয়েছে",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isEnglish
+                    ? "Complete Diagnostic Summary"
+                    : "সম্পূর্ণ ডায়াগনস্টিক সারসংক্ষেপ",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 20,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isEnglish ? "View Results" : "ফলাফল দেখুন",
+                      style: const TextStyle(
+                        color: Colors.teal,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.teal,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildDetailedResults(BuildContext context, DiseaseProvider provider) {
     if (provider.multiResult != null) {
       final multi = provider.multiResult!;
-      final resultToShow = _selectedPhotoIndex != null 
+      final resultToShow = _selectedPhotoIndex != null
           ? multi.individualResults[_selectedPhotoIndex!]
           : multi.primary;
       final isAggregated = _selectedPhotoIndex == null;
@@ -357,36 +412,56 @@ class _DetectionTabState extends State<DetectionTab> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (isAggregated) ...[
-            Center(child: _buildStatusBadge(context, multi, provider.isEnglish)),
+            Center(
+              child: _buildStatusBadge(context, multi, provider.isEnglish),
+            ),
             const SizedBox(height: 20),
           ] else ...[
             Row(
               children: [
-                const Icon(Icons.info_outline_rounded, size: 16, color: Colors.teal),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Colors.teal,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    provider.isEnglish 
-                        ? "Individual Result (Photo ${_selectedPhotoIndex! + 1})" 
+                    provider.isEnglish
+                        ? "Individual Result (Photo ${_selectedPhotoIndex! + 1})"
                         : "ব্যক্তিগত ফলাফল (ফটো ${_selectedPhotoIndex! + 1})",
-                    style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(
+                      color: Colors.teal,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const Spacer(),
                 TextButton(
                   onPressed: () => setState(() => _selectedPhotoIndex = null),
-                  child: Text(provider.isEnglish ? "Show Summary" : "সারসংক্ষেপ দেখুন", style: const TextStyle(fontSize: 12)),
+                  child: Text(
+                    provider.isEnglish ? "Show Summary" : "সারসংক্ষেপ দেখুন",
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
           ],
 
           if (isAggregated && multi.type == ResultType.inconclusive)
-            ...multi.results.map((res) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildSingleResultCard(context, res, provider.isEnglish, isSmall: true),
-                ))
+            ...multi.results.map(
+              (res) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildSingleResultCard(
+                  context,
+                  res,
+                  provider.isEnglish,
+                  isSmall: true,
+                ),
+              ),
+            )
           else
             _buildSingleResultCard(context, resultToShow, provider.isEnglish),
 
@@ -408,7 +483,11 @@ class _DetectionTabState extends State<DetectionTab> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildResultCardLegacy(context, provider.outputs![0], provider.isEnglish),
+          _buildResultCardLegacy(
+            context,
+            provider.outputs![0],
+            provider.isEnglish,
+          ),
           const SizedBox(height: 24),
           _buildDiseaseInfo(context, label, provider.isEnglish),
           if (isDisease) ...[
@@ -438,7 +517,11 @@ class _DetectionTabState extends State<DetectionTab> {
                   color: Colors.teal.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.chat_bubble_rounded, color: Colors.teal, size: 24),
+                child: const Icon(
+                  Icons.chat_bubble_rounded,
+                  color: Colors.teal,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -446,11 +529,18 @@ class _DetectionTabState extends State<DetectionTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isEnglish ? "Need Expert Advice?" : "বিশেষজ্ঞের পরামর্শ প্রয়োজন?",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      isEnglish
+                          ? "Need Expert Advice?"
+                          : "বিশেষজ্ঞের পরামর্শ প্রয়োজন?",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     Text(
-                      isEnglish ? "Consult a Vet on WhatsApp" : "হোয়াটসঅ্যাপে বিশেষজ্ঞের সাথে কথা বলুন",
+                      isEnglish
+                          ? "Consult a Vet on WhatsApp"
+                          : "হোয়াটসঅ্যাপে বিশেষজ্ঞের সাথে কথা বলুন",
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                   ],
@@ -464,12 +554,18 @@ class _DetectionTabState extends State<DetectionTab> {
             child: ElevatedButton.icon(
               onPressed: () => _launchWhatsApp(context, isEnglish),
               icon: const Icon(Icons.phone_outlined, size: 18),
-              label: Text(isEnglish ? "Contact Veterinarian" : "পশুচিকিৎসকের সাথে যোগাযোগ করুন"),
+              label: Text(
+                isEnglish
+                    ? "Contact Veterinarian"
+                    : "পশুচিকিৎসকের সাথে যোগাযোগ করুন",
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -479,20 +575,35 @@ class _DetectionTabState extends State<DetectionTab> {
   }
 
   Future<void> _launchWhatsApp(BuildContext context, bool isEnglish) async {
-    const String phoneNumber = "+8801575115194";
+    const String phoneNumber = "8801575115194"; // Omit '+' for wa.me links
     final String message = isEnglish
         ? "Hello, I need some help with my poultry flock."
         : "হ্যালো, আমার খামারের মুরগির জন্য কিছু সাহায্য প্রয়োজন।";
+
+    final Uri whatsappUri = Uri.parse(
+      "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}",
+    );
     
-    final Uri whatsappUri = Uri.parse("https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}");
+    // Fallback scheme for direct app launch
+    final Uri whatsappAppUri = Uri.parse(
+      "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}",
+    );
 
     try {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(whatsappAppUri)) {
+        await launchUrl(whatsappAppUri);
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(isEnglish ? "Could not launch WhatsApp" : "হোয়াটসঅ্যাপ খোলা সম্ভব হচ্ছে না")),
+            SnackBar(
+              content: Text(
+                isEnglish
+                    ? "Could not launch WhatsApp. Please install it."
+                    : "হোয়াটসঅ্যাপ খোলা সম্ভব হচ্ছে না। দয়া করে এটি ইনস্টল করুন।",
+              ),
+            ),
           );
         }
       }
@@ -503,7 +614,11 @@ class _DetectionTabState extends State<DetectionTab> {
 
   // --- UI Components ---
 
-  Widget _buildStatusBadge(BuildContext context, MultiAnalysisResult result, bool isEnglish) {
+  Widget _buildStatusBadge(
+    BuildContext context,
+    MultiAnalysisResult result,
+    bool isEnglish,
+  ) {
     Color color;
     String text;
     IconData icon;
@@ -511,17 +626,23 @@ class _DetectionTabState extends State<DetectionTab> {
     switch (result.type) {
       case ResultType.unanimous:
         color = Colors.green;
-        text = isEnglish ? "High Confidence (3/3 agreed)" : "উচ্চ নিশ্চয়তা (৩/৩ মিলছে)";
+        text = isEnglish
+            ? "High Confidence (3/3 agreed)"
+            : "উচ্চ নিশ্চয়তা (৩/৩ মিলছে)";
         icon = Icons.verified_rounded;
         break;
       case ResultType.majority:
         color = Colors.teal;
-        text = isEnglish ? "Reliable Result (2/3 agreed)" : "নির্ভরযোগ্য ফলাফল (২/৩ মিলছে)";
+        text = isEnglish
+            ? "Reliable Result (2/3 agreed)"
+            : "নির্ভরযোগ্য ফলাফল (২/৩ মিলছে)";
         icon = Icons.check_circle_rounded;
         break;
       case ResultType.inconclusive:
         color = Colors.orange;
-        text = isEnglish ? "Inconclusive (Different results)" : "অস্পষ্ট ফলাফল (ভিন্ন ভিন্ন ফলাফল)";
+        text = isEnglish
+            ? "Inconclusive (Different results)"
+            : "অস্পষ্ট ফলাফল (ভিন্ন ভিন্ন ফলাফল)";
         icon = Icons.warning_rounded;
         break;
     }
@@ -540,14 +661,23 @@ class _DetectionTabState extends State<DetectionTab> {
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSingleResultCard(BuildContext context, SingleResult result, bool isEnglish, {bool isSmall = false}) {
+  Widget _buildSingleResultCard(
+    BuildContext context,
+    SingleResult result,
+    bool isEnglish, {
+    bool isSmall = false,
+  }) {
     String cleanId = _getCleanId(result.label);
     String formattedLabel = _formatLabel(result.label, isEnglish);
     double confidencePercent = result.confidence * 100;
@@ -556,12 +686,17 @@ class _DetectionTabState extends State<DetectionTab> {
 
     bool isHealthy = cleanId == 'healthy';
     Color themeColor = isHealthy ? Colors.green : Colors.redAccent;
-    Color bgColor = isHealthy ? Colors.green.withOpacity(0.1) : Colors.redAccent.withOpacity(0.1);
+    Color bgColor = isHealthy
+        ? Colors.green.withOpacity(0.1)
+        : Colors.redAccent.withOpacity(0.1);
 
     return Center(
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: isSmall ? 20 : 32, horizontal: 24),
+        padding: EdgeInsets.symmetric(
+          vertical: isSmall ? 20 : 32,
+          horizontal: 24,
+        ),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(24),
@@ -575,42 +710,50 @@ class _DetectionTabState extends State<DetectionTab> {
           ],
         ),
         child: Column(
-        children: [
-          Text(
-            formattedLabel,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: isSmall ? 18 : 24,
-              fontWeight: FontWeight.bold,
-              color: themeColor,
+          children: [
+            Text(
+              formattedLabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: isSmall ? 18 : 24,
+                fontWeight: FontWeight.bold,
+                color: themeColor,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "${isEnglish ? "Confidence" : "নিশ্চয়তা"}: ${confidencePercent.toStringAsFixed(1)}%",
-            style: TextStyle(
-              fontSize: isSmall ? 12 : 14,
-              fontWeight: FontWeight.w500,
-              color: themeColor.withOpacity(0.8),
+            const SizedBox(height: 4),
+            Text(
+              "${isEnglish ? "Confidence" : "নিশ্চয়তা"}: ${confidencePercent.toStringAsFixed(1)}%",
+              style: TextStyle(
+                fontSize: isSmall ? 12 : 14,
+                fontWeight: FontWeight.w500,
+                color: themeColor.withOpacity(0.8),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 
   // --- Legacy helper for backward compatibility ---
-  Widget _buildResultCardLegacy(BuildContext context, dynamic output, bool isEnglish) {
+  Widget _buildResultCardLegacy(
+    BuildContext context,
+    dynamic output,
+    bool isEnglish,
+  ) {
     String rawLabel = output['label'].toString();
     return _buildSingleResultCard(
-      context, 
-      SingleResult(label: rawLabel, confidence: output['confidence'] as double), 
-      isEnglish
+      context,
+      SingleResult(label: rawLabel, confidence: output['confidence'] as double),
+      isEnglish,
     );
   }
 
-  Widget _buildDiseaseInfo(BuildContext context, String rawLabel, bool isEnglish) {
+  Widget _buildDiseaseInfo(
+    BuildContext context,
+    String rawLabel,
+    bool isEnglish,
+  ) {
     String id = _getCleanId(rawLabel);
     if (id == "healthy" || id == 'others') return const SizedBox.shrink();
 
