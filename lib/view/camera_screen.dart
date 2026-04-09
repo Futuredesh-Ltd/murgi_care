@@ -3,7 +3,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:image/image.dart' as img; // Use your existing import
+import 'package:image/image.dart' as img;
 
 class CameraScanScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -21,11 +21,12 @@ class CameraScanScreen extends StatefulWidget {
 class _CameraScanScreenState extends State<CameraScanScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
+  final List<File> _capturedPhotos = [];
+  bool _isTaking = false;
 
   @override
   void initState() {
     super.initState();
-    // Using high resolution for better crop quality
     _controller = CameraController(widget.cameras[0], ResolutionPreset.high);
     _initializeControllerFuture = _controller.initialize();
   }
@@ -37,6 +38,12 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
   }
 
   Future<void> _takeAndCropPicture() async {
+    if (_isTaking || _capturedPhotos.length >= 3) return;
+
+    setState(() {
+      _isTaking = true;
+    });
+
     try {
       await _initializeControllerFuture;
       final XFile photo = await _controller.takePicture();
@@ -60,12 +67,24 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
           height: size,
         );
 
-        final croppedFile = File(photo.path)
-          ..writeAsBytesSync(img.encodeJpg(cropped));
-        if (mounted) Navigator.pop(context, croppedFile);
+        final croppedFile = File(photo.path)..writeAsBytesSync(img.encodeJpg(cropped));
+        
+        setState(() {
+          _capturedPhotos.add(croppedFile);
+        });
+
+        if (_capturedPhotos.length == 3) {
+          if (mounted) Navigator.pop(context, _capturedPhotos);
+        }
       }
     } catch (e) {
       debugPrint("Camera error: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTaking = false;
+        });
+      }
     }
   }
 
@@ -97,7 +116,6 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                             backgroundBlendMode: BlendMode.dstOut,
                           ),
                         ),
-                        // The "Clear" square
                         Align(
                           alignment: Alignment.center,
                           child: Container(
@@ -114,10 +132,10 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                   ),
                 ),
 
-                // 3. Teal Border around the "Hole"
+                // 3. Teal Border
                 Center(
                   child: Container(
-                    width: 252, // Slightly larger than hole to show border
+                    width: 252,
                     height: 252,
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.teal, width: 3),
@@ -126,43 +144,117 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                   ),
                 ),
 
-                // 4. UI Elements (Text & Button)
+                // 4. Header Info
                 Positioned(
-                  top: 80,
+                  top: 60,
                   left: 0,
                   right: 0,
-                  child: Text(
-                    widget.isEnglish
-                        ? "Center Sample in Box"
-                        : "বক্সের মাঝখানে ছবি রাখুন",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Column(
+                    children: [
+                      Text(
+                        widget.isEnglish
+                            ? "Step ${_capturedPhotos.length + 1} of 3"
+                            : "ধাপ ${ _capturedPhotos.length + 1} / ৩",
+                        style: const TextStyle(
+                          color: Colors.teal,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.isEnglish
+                            ? "Center Sample in Box"
+                            : "বক্সের মাঝখানে ছবি রাখুন",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
+                // 5. Thumbnails Strip
                 Positioned(
-                  bottom: 60,
+                  bottom: 160,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(3, (index) {
+                      bool hasPhoto = index < _capturedPhotos.length;
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: hasPhoto ? Colors.teal : Colors.white24,
+                            width: 2,
+                          ),
+                        ),
+                        child: hasPhoto
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.file(
+                                  _capturedPhotos[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Icon(
+                                Icons.photo_camera_outlined,
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                      );
+                    }),
+                  ),
+                ),
+
+                // 6. Capture Button
+                Positioned(
+                  bottom: 50,
                   left: 0,
                   right: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: _takeAndCropPicture,
+                      onTap: _isTaking ? null : _takeAndCropPicture,
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.circle,
-                          size: 75,
-                          color: Colors.teal,
-                        ),
+                        child: _isTaking
+                            ? const SizedBox(
+                                width: 75,
+                                height: 75,
+                                child: CircularProgressIndicator(
+                                  color: Colors.teal,
+                                  strokeWidth: 6,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.circle,
+                                size: 75,
+                                color: Colors.teal,
+                              ),
                       ),
                     ),
+                  ),
+                ),
+                
+                // Back Button
+                Positioned(
+                  top: 40,
+                  left: 20,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
               ],

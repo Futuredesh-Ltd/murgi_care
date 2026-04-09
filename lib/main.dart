@@ -3,6 +3,7 @@ import 'package:murgi_care/controller/auth_controller.dart';
 import 'package:murgi_care/controller/controller.dart';
 import 'package:murgi_care/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:murgi_care/core/app_theme.dart';
 import 'package:murgi_care/view/widgets/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -30,11 +31,17 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Murgi Care',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: SplashScreen(),
+    return Consumer<DiseaseProvider>(
+      builder: (context, provider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Murgi Care',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: provider.themeMode,
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }

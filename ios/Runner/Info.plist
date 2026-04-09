@@ -19,13 +19,19 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
+	<string>3.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<string>5</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>MurgiCare needs access to your camera to scan chicken droppings and identify potential diseases.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires microphone access to monitor device health and audio diagnostic features.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allows you to select photos of poultry or droppings from your library for AI diagnosis.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -45,13 +51,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-    <key>NSCameraUsageDescription</key>
-    <string>MurgiCare needs access to your camera to scan chicken droppings and identify potential diseases.</string>
-	<key>NSMicrophoneUsageDescription</key>
-    <string>MurgiCare may use the microphone for future features like recording short videos of poultry behavior or sounds.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Allows you to select photos of poultry or droppings from your library for AI diagnosis.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>This app requires microphone access to monitor device health and audio diagnostic features.</string>
 </dict>
 </plist>

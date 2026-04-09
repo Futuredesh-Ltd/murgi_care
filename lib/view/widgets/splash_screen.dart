@@ -18,7 +18,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 5));
+    // Shorter initial delay for aesthetics
+    await Future.delayed(const Duration(milliseconds: 800));
 
     final prefs = await SharedPreferences.getInstance();
     final bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
@@ -72,6 +73,8 @@ class _SplashScreenState extends State<SplashScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 30),
+            const CircularProgressIndicator(color: Colors.teal),
           ],
         ),
       ),
