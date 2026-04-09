@@ -147,7 +147,8 @@ class ToolsTab extends StatelessWidget {
                       ? "Clean feeders & drinkers daily"
                       : "খাবার ও পানির পাত্র প্রতিদিন পরিষ্কার করুন",
                   color: Colors.blue,
-                  onTap: () => _showPreventionDetail(context, isEnglish, "cleaning"),
+                  onTap: () =>
+                      _showPreventionDetail(context, isEnglish, "cleaning"),
                 ),
                 _buildPreventionTipTile(
                   context,
@@ -157,17 +158,21 @@ class ToolsTab extends StatelessWidget {
                       ? "Restrict unnecessary visits"
                       : "অপ্রয়োজনীয় লোকজনের প্রবেশ নিয়ন্ত্রণ করুন",
                   color: Colors.purple,
-                  onTap: () => _showPreventionDetail(context, isEnglish, "visitors"),
+                  onTap: () =>
+                      _showPreventionDetail(context, isEnglish, "visitors"),
                 ),
                 _buildPreventionTipTile(
                   context,
                   icon: Icons.sick_outlined,
-                  title: isEnglish ? "Isolate Sick Birds" : "অসুস্থ মুরগি আলাদা করুন",
+                  title: isEnglish
+                      ? "Isolate Sick Birds"
+                      : "অসুস্থ মুরগি আলাদা করুন",
                   subtitle: isEnglish
                       ? "Separate sick birds immediately"
                       : "অসুস্থ মুরগিকে তাৎক্ষণিক আলাদা করুন",
                   color: Colors.redAccent,
-                  onTap: () => _showPreventionDetail(context, isEnglish, "isolation"),
+                  onTap: () =>
+                      _showPreventionDetail(context, isEnglish, "isolation"),
                 ),
               ],
             ),
@@ -665,16 +670,16 @@ class ToolsTab extends StatelessWidget {
   }
 
   Future<void> _launchWhatsApp(BuildContext context, bool isEnglish) async {
-    const String phoneNumber = "8801575115194"; // Remove '+' for wa.me links
+    const String phoneNumber = "+8801575115194"; // Remove '+' for wa.me links
     final String message = isEnglish
         ? "Hello, I need some help with my poultry flock."
         : "হ্যালো, আমার পোল্ট্রি খামারের জন্য কিছু সহায়তা প্রয়োজন।";
 
     final Uri whatsappAppUri = Uri.parse(
-      "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeFull(message)}",
+      "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}",
     );
     final Uri webUri = Uri.parse(
-      "https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}",
+      "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}",
     );
 
     try {
@@ -715,12 +720,7 @@ class ToolsTab extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              t2,
-              textAlign: TextAlign.end,
-            ),
-          ),
+          Expanded(child: Text(t2, textAlign: TextAlign.end)),
         ],
       ),
     );
