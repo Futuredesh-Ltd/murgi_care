@@ -1,5 +1,4 @@
 {
-  "originHash" : "c63c63846d9c539229e96de38d6af51417e28c0ee9a0bc48bd0f0f19d923c329",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -26,6 +25,15 @@
       "state" : {
         "revision" : "85560b48b0ff099ad83fe53d67df3c67fbc2b7a6",
         "version" : "12.10.0"
+      }
+    },
+    {
+      "identity" : "flutterfire",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/flutterfire",
+      "state" : {
+        "revision" : "51f0bc14786bd83120d942df340722b4cef93032",
+        "version" : "4.5.0-firebase-core-swift"
       }
     },
     {
@@ -117,7 +125,16 @@
         "revision" : "540318ecedd63d883069ae7f1ed811a2df00b6ac",
         "version" : "2.4.0"
       }
+    },
+    {
+      "identity" : "tocropviewcontroller",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/TimOliver/TOCropViewController.git",
+      "state" : {
+        "revision" : "d4a6d8100f4b886fdbc8ae399bf144ff3e9afb7e",
+        "version" : "2.8.0"
+      }
     }
   ],
-  "version" : 3
+  "version" : 2
 }
