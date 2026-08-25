@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:murgi_care/view/widgets/in_app_camera.dart';
+import '../view/screens/admin_dashboard_screen.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -120,7 +121,17 @@ class AuthProvider extends ChangeNotifier {
           profileImage: _selectedImage, // Can be null now
         );
       }
-      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        Navigator.pop(context);
+        if (email.trim().toLowerCase() == 'admin@gmail.com' || _selectedUserType.toLowerCase() == 'admin') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AdminDashboardScreen(isEnglish: false),
+            ),
+          );
+        }
+      }
     } catch (e) {
       _showError(context, e.toString().replaceAll('Exception: ', ''));
     } finally {
