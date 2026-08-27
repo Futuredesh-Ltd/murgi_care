@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/databank_service.dart';
 import '../../model/databank_model.dart';
+import '../../controller/riverpod_providers.dart';
 
-class DataBankTab extends StatefulWidget {
+class DataBankTab extends ConsumerWidget {
   final bool isEnglish;
 
   const DataBankTab({super.key, required this.isEnglish});
 
   @override
-  State<DataBankTab> createState() => _DataBankTabState();
-}
-
-class _DataBankTabState extends State<DataBankTab> {
-  final DataBankService _dataBankService = DataBankService();
-  Farm? _selectedFarm;
-  Batch? _selectedBatch;
-
-  @override
-  Widget build(BuildContext context) {
-    final isEng = widget.isEnglish;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isEng = isEnglish;
     final user = FirebaseAuth.instance.currentUser;
+    final dataBankService = DataBankService();
+    final selectedFarm = ref.watch(databankFarmProvider);
+    final selectedBatch = ref.watch(databankBatchProvider);
 
     if (user == null) {
       return Container(
@@ -87,20 +83,20 @@ class _DataBankTabState extends State<DataBankTab> {
           const SizedBox(height: 20),
 
           // Step 1: Select or Create Farm
-          _buildFarmSelector(isEng),
+          _buildFarmSelector(context, ref, dataBankService, selectedFarm, isEng),
 
-          if (_selectedFarm != null) ...[
+          if (selectedFarm != null) ...[
             const SizedBox(height: 16),
             // Step 2: Select or Create Batch
-            _buildBatchSelector(isEng),
+            _buildBatchSelector(context, ref, dataBankService, selectedFarm, selectedBatch, isEng),
           ],
 
-          if (_selectedFarm != null && _selectedBatch != null) ...[
+          if (selectedFarm != null && selectedBatch != null) ...[
             const SizedBox(height: 20),
             // Step 3: Analytics & Daily Records
-            _buildBatchAnalytics(isEng),
+            _buildBatchAnalytics(context, dataBankService, selectedBatch, isEng),
             const SizedBox(height: 16),
-            _buildDailyRecordsSection(isEng),
+            _buildDailyRecordsSection(context, dataBankService, selectedBatch, isEng),
           ],
         ],
       ),
@@ -108,13 +104,19 @@ class _DataBankTabState extends State<DataBankTab> {
   }
 
   // --- FARM SELECTOR ---
-  Widget _buildFarmSelector(bool isEng) {
+  Widget _buildFarmSelector(
+    BuildContext context,
+    WidgetRef ref,
+    DataBankService dataBankService,
+    Farm? selectedFarm,
+    bool isEng,
+  ) {
     return StreamBuilder<List<Farm>>(
-      stream: _dataBankService.getFarmsStream(),
+      stream: dataBankService.getFarmsStream(),
       builder: (context, snapshot) {
         final farms = snapshot.data ?? [];
-        final Farm? selectedFarmValue = farms.any((f) => f.id == _selectedFarm?.id)
-            ? farms.firstWhere((f) => f.id == _selectedFarm?.id)
+        final Farm? selectedFarmValue = farms.any((f) => f.id == selectedFarm?.id)
+            ? farms.firstWhere((f) => f.id == selectedFarm?.id)
             : null;
 
         return Card(
@@ -134,7 +136,7 @@ class _DataBankTabState extends State<DataBankTab> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.add_circle, color: Colors.teal),
-                      onPressed: () => _showAddFarmDialog(isEng),
+                      onPressed: () => _showAddFarmDialog(context, dataBankService, isEng),
                       tooltip: isEng ? "Add New Farm" : "নতুন খামার যোগ করুন",
                     ),
                   ],
@@ -156,10 +158,8 @@ class _DataBankTabState extends State<DataBankTab> {
                       );
                     }).toList(),
                     onChanged: (val) {
-                      setState(() {
-                        _selectedFarm = val;
-                        _selectedBatch = null;
-                      });
+                      ref.read(databankFarmProvider.notifier).state = val;
+                      ref.read(databankBatchProvider.notifier).state = null;
                     },
                   ),
               ],
@@ -171,13 +171,20 @@ class _DataBankTabState extends State<DataBankTab> {
   }
 
   // --- BATCH SELECTOR ---
-  Widget _buildBatchSelector(bool isEng) {
+  Widget _buildBatchSelector(
+    BuildContext context,
+    WidgetRef ref,
+    DataBankService dataBankService,
+    Farm selectedFarm,
+    Batch? selectedBatch,
+    bool isEng,
+  ) {
     return StreamBuilder<List<Batch>>(
-      stream: _dataBankService.getBatchesStream(_selectedFarm!.id),
+      stream: dataBankService.getBatchesStream(selectedFarm.id),
       builder: (context, snapshot) {
         final batches = snapshot.data ?? [];
-        final Batch? selectedBatchValue = batches.any((b) => b.id == _selectedBatch?.id)
-            ? batches.firstWhere((b) => b.id == _selectedBatch?.id)
+        final Batch? selectedBatchValue = batches.any((b) => b.id == selectedBatch?.id)
+            ? batches.firstWhere((b) => b.id == selectedBatch?.id)
             : null;
 
         return Card(
@@ -197,7 +204,7 @@ class _DataBankTabState extends State<DataBankTab> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.add_circle, color: Colors.teal),
-                      onPressed: () => _showAddBatchDialog(isEng),
+                      onPressed: () => _showAddBatchDialog(context, dataBankService, selectedFarm, isEng),
                       tooltip: isEng ? "Add New Batch" : "নতুন ব্যাচ চালু করুন",
                     ),
                   ],
@@ -219,7 +226,7 @@ class _DataBankTabState extends State<DataBankTab> {
                       );
                     }).toList(),
                     onChanged: (val) {
-                      setState(() => _selectedBatch = val);
+                      ref.read(databankBatchProvider.notifier).state = val;
                     },
                   ),
               ],
@@ -231,15 +238,20 @@ class _DataBankTabState extends State<DataBankTab> {
   }
 
   // --- ANALYTICS ---
-  Widget _buildBatchAnalytics(bool isEng) {
+  Widget _buildBatchAnalytics(
+    BuildContext context,
+    DataBankService dataBankService,
+    Batch selectedBatch,
+    bool isEng,
+  ) {
     return StreamBuilder<List<DailyRecord>>(
-      stream: _dataBankService.getDailyRecordsStream(_selectedFarm!.id, _selectedBatch!.id),
+      stream: dataBankService.getDailyRecordsStream(selectedBatch.id, selectedBatch.id),
       builder: (context, snapshot) {
         final records = snapshot.data ?? [];
 
         double totalFeed = 0.0;
         int totalMortality = 0;
-        double totalExpense = _selectedBatch!.chickCost * _selectedBatch!.initialBirds;
+        double totalExpense = selectedBatch.chickCost * selectedBatch.initialBirds;
         double totalSales = 0.0;
 
         for (var r in records) {
@@ -249,8 +261,8 @@ class _DataBankTabState extends State<DataBankTab> {
           totalSales += r.salesAmount;
         }
 
-        final double mortalityRate = _selectedBatch!.initialBirds > 0
-            ? (totalMortality / _selectedBatch!.initialBirds) * 100
+        final double mortalityRate = selectedBatch.initialBirds > 0
+            ? (totalMortality / selectedBatch.initialBirds) * 100
             : 0.0;
         final double netProfit = totalSales - totalExpense;
 
@@ -270,7 +282,7 @@ class _DataBankTabState extends State<DataBankTab> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _statBox(isEng ? "Birds" : "মোট মুরগি", "${_selectedBatch!.initialBirds}", Colors.blue),
+                    _statBox(isEng ? "Birds" : "মোট মুরগি", "${selectedBatch.initialBirds}", Colors.blue),
                     _statBox(isEng ? "Mortality" : "মৃত্যু", "$totalMortality (${mortalityRate.toStringAsFixed(1)}%)", Colors.redAccent),
                     _statBox(isEng ? "Total Feed" : "মোট খাদ্য", "${totalFeed.toStringAsFixed(0)} kg", Colors.amber.shade900),
                   ],
@@ -319,7 +331,12 @@ class _DataBankTabState extends State<DataBankTab> {
   }
 
   // --- DAILY RECORDS SECTION ---
-  Widget _buildDailyRecordsSection(bool isEng) {
+  Widget _buildDailyRecordsSection(
+    BuildContext context,
+    DataBankService dataBankService,
+    Batch selectedBatch,
+    bool isEng,
+  ) {
     return Column(
       children: [
         Row(
@@ -330,7 +347,7 @@ class _DataBankTabState extends State<DataBankTab> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             ElevatedButton.icon(
-              onPressed: () => _showAddRecordDialog(isEng),
+              onPressed: () => _showAddRecordDialog(context, dataBankService, selectedBatch, isEng),
               icon: const Icon(Icons.add, size: 18),
               label: Text(isEng ? "Add Record" : "আজকের হিসাব যোগ"),
               style: ElevatedButton.styleFrom(
@@ -343,7 +360,7 @@ class _DataBankTabState extends State<DataBankTab> {
         ),
         const SizedBox(height: 12),
         StreamBuilder<List<DailyRecord>>(
-          stream: _dataBankService.getDailyRecordsStream(_selectedFarm!.id, _selectedBatch!.id),
+          stream: dataBankService.getDailyRecordsStream(selectedBatch.id, selectedBatch.id),
           builder: (context, snapshot) {
             final records = snapshot.data ?? [];
             if (records.isEmpty) {
@@ -377,7 +394,7 @@ class _DataBankTabState extends State<DataBankTab> {
     );
   }
 
-  void _showAddFarmDialog(bool isEng) {
+  void _showAddFarmDialog(BuildContext context, DataBankService dataBankService, bool isEng) {
     final nameCtrl = TextEditingController();
     final locCtrl = TextEditingController();
     String type = 'Broiler';
@@ -398,8 +415,8 @@ class _DataBankTabState extends State<DataBankTab> {
           ElevatedButton(
             onPressed: () async {
               if (nameCtrl.text.isNotEmpty) {
-                await _dataBankService.addFarm(Farm(id: '', name: nameCtrl.text, location: locCtrl.text, farmType: type));
-                if (mounted) Navigator.pop(ctx);
+                await dataBankService.addFarm(Farm(id: '', name: nameCtrl.text, location: locCtrl.text, farmType: type));
+                if (ctx.mounted) Navigator.pop(ctx);
               }
             },
             child: const Text("সংরক্ষণ করুন"),
@@ -409,7 +426,7 @@ class _DataBankTabState extends State<DataBankTab> {
     );
   }
 
-  void _showAddBatchDialog(bool isEng) {
+  void _showAddBatchDialog(BuildContext context, DataBankService dataBankService, Farm selectedFarm, bool isEng) {
     final nameCtrl = TextEditingController();
     final birdsCtrl = TextEditingController();
     final chickCostCtrl = TextEditingController();
@@ -431,8 +448,8 @@ class _DataBankTabState extends State<DataBankTab> {
           ElevatedButton(
             onPressed: () async {
               if (nameCtrl.text.isNotEmpty) {
-                await _dataBankService.addBatch(
-                  _selectedFarm!.id,
+                await dataBankService.addBatch(
+                  selectedFarm.id,
                   Batch(
                     id: '',
                     batchName: nameCtrl.text,
@@ -442,7 +459,7 @@ class _DataBankTabState extends State<DataBankTab> {
                     startDate: DateTime.now(),
                   ),
                 );
-                if (mounted) Navigator.pop(ctx);
+                if (ctx.mounted) Navigator.pop(ctx);
               }
             },
             child: const Text("সংরক্ষণ"),
@@ -452,7 +469,7 @@ class _DataBankTabState extends State<DataBankTab> {
     );
   }
 
-  void _showAddRecordDialog(bool isEng) {
+  void _showAddRecordDialog(BuildContext context, DataBankService dataBankService, Batch selectedBatch, bool isEng) {
     final feedCtrl = TextEditingController();
     final mortCtrl = TextEditingController();
     final expCtrl = TextEditingController();
@@ -477,9 +494,9 @@ class _DataBankTabState extends State<DataBankTab> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("বাতিল")),
           ElevatedButton(
             onPressed: () async {
-              await _dataBankService.addDailyRecord(
-                _selectedFarm!.id,
-                _selectedBatch!.id,
+              await dataBankService.addDailyRecord(
+                selectedBatch.id,
+                selectedBatch.id,
                 DailyRecord(
                   id: '',
                   date: DateTime.now(),
@@ -489,7 +506,7 @@ class _DataBankTabState extends State<DataBankTab> {
                   salesAmount: double.tryParse(salesCtrl.text) ?? 0.0,
                 ),
               );
-              if (mounted) Navigator.pop(ctx);
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text("সংরক্ষণ"),
           ),
