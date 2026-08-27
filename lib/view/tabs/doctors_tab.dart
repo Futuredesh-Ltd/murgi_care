@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/poultry_service.dart';
 import '../../model/doctor_model.dart';
+import '../../controller/riverpod_providers.dart';
 
-class DoctorsTab extends StatefulWidget {
+class DoctorsTab extends ConsumerWidget {
   final bool isEnglish;
 
   const DoctorsTab({super.key, required this.isEnglish});
 
   @override
-  State<DoctorsTab> createState() => _DoctorsTabState();
-}
-
-class _DoctorsTabState extends State<DoctorsTab> {
-  final PoultryService _poultryService = PoultryService();
-  String _searchQuery = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final isEng = widget.isEnglish;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isEng = isEnglish;
+    final searchQuery = ref.watch(doctorsTabProvider);
+    final poultryService = PoultryService();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -26,11 +22,15 @@ class _DoctorsTabState extends State<DoctorsTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
-            onChanged: (val) => setState(() => _searchQuery = val),
+            onChanged: (val) =>
+                ref.read(doctorsTabProvider.notifier).setSearchQuery(val),
             decoration: InputDecoration(
-              hintText: isEng ? "Search doctor by name or district..." : "ডাক্তারের নাম বা জেলা দিয়ে খুঁজুন...",
+              hintText: isEng
+                  ? "Search doctor by name or district..."
+                  : "ডাক্তারের নাম বা জেলা দিয়ে খুঁজুন...",
               prefixIcon: const Icon(Icons.search, color: Colors.teal),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               filled: true,
               fillColor: Theme.of(context).cardColor,
             ),
@@ -38,24 +38,32 @@ class _DoctorsTabState extends State<DoctorsTab> {
           const SizedBox(height: 16),
 
           Text(
-            isEng ? "Veterinary Doctors & Specialists" : "পশুচিকিৎসক ও বিশেষজ্ঞবৃন্দ",
+            isEng
+                ? "Veterinary Doctors & Specialists"
+                : "পশুচিকিৎসক ও বিশেষজ্ঞবৃন্দ",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 12),
 
           StreamBuilder<List<Doctor>>(
-            stream: _poultryService.getDoctorsStream(),
+            stream: poultryService.getDoctorsStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
 
               var doctors = snapshot.data ?? [];
-              if (_searchQuery.isNotEmpty) {
+              if (searchQuery.isNotEmpty) {
                 doctors = doctors.where((d) {
-                  return d.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                      d.district.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                      d.specialization.toLowerCase().contains(_searchQuery.toLowerCase());
+                  return d.name
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase()) ||
+                      d.district
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase()) ||
+                      d.specialization
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase());
                 }).toList();
               }
 
@@ -64,7 +72,9 @@ class _DoctorsTabState extends State<DoctorsTab> {
                   padding: const EdgeInsets.all(32),
                   alignment: Alignment.center,
                   child: Text(
-                    isEng ? "No doctors found." : "কোনো ডাক্তার তথ্য পাওয়া যায়নি।",
+                    isEng
+                        ? "No doctors found."
+                        : "কোনো ডাক্তার তথ্য পাওয়া যায়নি।",
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 );
@@ -79,7 +89,8 @@ class _DoctorsTabState extends State<DoctorsTab> {
                   return Card(
                     elevation: 2,
                     margin: const EdgeInsets.only(bottom: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -94,7 +105,8 @@ class _DoctorsTabState extends State<DoctorsTab> {
                                     ? NetworkImage(doc.profileImage)
                                     : null,
                                 child: doc.profileImage.isEmpty
-                                    ? const Icon(Icons.person_rounded, size: 36, color: Colors.teal)
+                                    ? const Icon(Icons.person_rounded,
+                                        size: 36, color: Colors.teal)
                                     : null,
                               ),
                               const SizedBox(width: 12),
@@ -104,15 +116,22 @@ class _DoctorsTabState extends State<DoctorsTab> {
                                   children: [
                                     Text(
                                       doc.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
                                     ),
                                     Text(
                                       doc.qualification,
-                                      style: TextStyle(fontSize: 12, color: Colors.grey[800]),
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[800]),
                                     ),
                                     Text(
                                       doc.specialization,
-                                      style: const TextStyle(fontSize: 12, color: Colors.teal, fontWeight: FontWeight.w600),
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.teal,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                   ],
                                 ),
@@ -120,21 +139,33 @@ class _DoctorsTabState extends State<DoctorsTab> {
                             ],
                           ),
                           const Divider(height: 24),
-                          _infoRow(Icons.work_history_rounded, isEng ? "Experience" : "অভিজ্ঞতা", doc.experience),
-                          _infoRow(Icons.location_on_rounded, isEng ? "Chamber Address" : "চেম্বার ঠিকানা", "${doc.address}, ${doc.district}"),
+                          _infoRow(
+                              Icons.work_history_rounded,
+                              isEng ? "Experience" : "অভিজ্ঞতা",
+                              doc.experience),
+                          _infoRow(
+                              Icons.location_on_rounded,
+                              isEng ? "Chamber Address" : "চেম্বার ঠিকানা",
+                              "${doc.address}, ${doc.district}"),
                           if (doc.availableTime.isNotEmpty)
-                            _infoRow(Icons.access_time_rounded, isEng ? "Available Time" : "সাক্ষাতের সময়", doc.availableTime),
+                            _infoRow(
+                                Icons.access_time_rounded,
+                                isEng ? "Available Time" : "সাক্ষাতের সময়",
+                                doc.availableTime),
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               OutlinedButton.icon(
-                                onPressed: () => _showDoctorDetailDialog(context, doc, isEng),
+                                onPressed: () => _showDoctorDetailDialog(
+                                    context, doc, isEng),
                                 icon: const Icon(Icons.info_outline, size: 16),
-                                label: Text(isEng ? "View Details" : "বিস্তারিত"),
+                                label:
+                                    Text(isEng ? "View Details" : "বিস্তারিত"),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.teal,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -145,7 +176,8 @@ class _DoctorsTabState extends State<DoctorsTab> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.teal,
                                   foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
                                 ),
                               ),
                             ],
@@ -176,7 +208,9 @@ class _DoctorsTabState extends State<DoctorsTab> {
               text: TextSpan(
                 style: const TextStyle(fontSize: 12, color: Colors.black87),
                 children: [
-                  TextSpan(text: "$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  TextSpan(
+                      text: "$label: ",
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   TextSpan(text: value),
                 ],
               ),
@@ -197,11 +231,13 @@ class _DoctorsTabState extends State<DoctorsTab> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("যোগ্যতা: ${doc.qualification}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text("যোগ্যতা: ${doc.qualification}",
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
             Text("বিশেষজ্ঞতা: ${doc.specialization}"),
             const SizedBox(height: 6),
-            Text("জেলা: ${doc.district} ${doc.upazila.isNotEmpty ? '(${doc.upazila})' : ''}"),
+            Text(
+                "জেলা: ${doc.district} ${doc.upazila.isNotEmpty ? '(${doc.upazila})' : ''}"),
             const SizedBox(height: 6),
             Text("ফোন: ${doc.phone}"),
             if (doc.email.isNotEmpty) Text("ইমেইল: ${doc.email}"),
@@ -210,7 +246,9 @@ class _DoctorsTabState extends State<DoctorsTab> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("বন্ধ করুন")),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("বন্ধ করুন")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
             onPressed: () {
