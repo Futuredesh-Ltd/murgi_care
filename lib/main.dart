@@ -1,47 +1,31 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:murgi_care/controller/auth_controller.dart';
-import 'package:murgi_care/controller/controller.dart';
-import 'package:murgi_care/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murgi_care/core/app_theme.dart';
 import 'package:murgi_care/view/widgets/splash_screen.dart';
-import 'package:provider/provider.dart';
+import 'package:murgi_care/controller/riverpod_providers.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => DiseaseProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-
-        Provider<AuthService>(create: (_) => AuthService()),
-      ],
-
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return Consumer<DiseaseProvider>(
-      builder: (context, provider, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Murgi Care',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: provider.themeMode,
-          home: const SplashScreen(),
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final diseaseProv = ref.watch(diseaseRiverpodProvider);
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Murgi Care',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: diseaseProv.themeMode,
+      home: const SplashScreen(),
     );
   }
 }
