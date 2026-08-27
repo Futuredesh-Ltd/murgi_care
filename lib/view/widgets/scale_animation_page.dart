@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ScaleAnimationPage extends StatefulWidget {
+final scaleAnimationTriggerProvider =
+    StateProvider.autoDispose.family<bool, String>((ref, id) => false);
+
+class ScaleAnimationPage extends ConsumerStatefulWidget {
   final Widget child;
   final Duration duration;
   final Curve curve;
   final double initialScale;
   final double finalScale;
+  final String id;
 
   const ScaleAnimationPage({
     super.key,
@@ -14,29 +19,32 @@ class ScaleAnimationPage extends StatefulWidget {
     this.curve = Curves.easeOutBack,
     this.initialScale = 0.92,
     this.finalScale = 1.0,
+    this.id = 'default_scale',
   });
 
   @override
-  State<ScaleAnimationPage> createState() => _ScaleAnimationPageState();
+  ConsumerState<ScaleAnimationPage> createState() => _ScaleAnimationPageState();
 }
 
-class _ScaleAnimationPageState extends State<ScaleAnimationPage> {
-  bool _animate = false;
-
+class _ScaleAnimationPageState extends ConsumerState<ScaleAnimationPage> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        setState(() => _animate = true);
+        ref
+            .read(scaleAnimationTriggerProvider(widget.id).notifier)
+            .state = true;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final animate = ref.watch(scaleAnimationTriggerProvider(widget.id));
+
     return AnimatedScale(
-      scale: _animate ? widget.finalScale : widget.initialScale,
+      scale: animate ? widget.finalScale : widget.initialScale,
       duration: widget.duration,
       curve: widget.curve,
       child: widget.child,
