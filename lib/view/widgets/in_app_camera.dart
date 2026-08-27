@@ -2,15 +2,17 @@ import 'dart:io';
 import 'dart:math' as math; // Added for mirroring
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../controller/riverpod_providers.dart';
 
-class InAppCameraScreen extends StatefulWidget {
+class InAppCameraScreen extends ConsumerStatefulWidget {
   const InAppCameraScreen({super.key});
 
   @override
-  State<InAppCameraScreen> createState() => _InAppCameraScreenState();
+  ConsumerState<InAppCameraScreen> createState() => _InAppCameraScreenState();
 }
 
-class _InAppCameraScreenState extends State<InAppCameraScreen> {
+class _InAppCameraScreenState extends ConsumerState<InAppCameraScreen> {
   CameraController? _controller;
   List<CameraDescription>? _cameras;
   int _selectedCameraIndex = 0;
@@ -45,7 +47,9 @@ class _InAppCameraScreenState extends State<InAppCameraScreen> {
     } catch (e) {
       debugPrint("Camera Error: $e");
     }
-    if (mounted) setState(() {});
+    if (mounted) {
+      ref.read(cameraScanProvider.notifier).touch();
+    }
   }
 
   void _toggleFlash() async {
@@ -62,9 +66,8 @@ class _InAppCameraScreenState extends State<InAppCameraScreen> {
 
     try {
       await _controller!.setFlashMode(newMode);
-      setState(() {
-        _currentFlashMode = newMode;
-      });
+      _currentFlashMode = newMode;
+      ref.read(cameraScanProvider.notifier).touch();
     } catch (e) {
       debugPrint("Flash Error: $e");
     }
@@ -83,6 +86,9 @@ class _InAppCameraScreenState extends State<InAppCameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch cameraScanProvider tick for reactive rebuilds
+    ref.watch(cameraScanProvider);
+
     if (_controller == null || !_controller!.value.isInitialized) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
