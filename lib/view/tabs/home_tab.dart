@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -8,45 +9,60 @@ import '../../model/banner_model.dart';
 import '../../model/announcement_model.dart';
 import '../../model/market_price_model.dart';
 import '../../model/daily_card_model.dart';
+import '../../model/article.dart';
+import '../../controller/riverpod_providers.dart';
 import '../widgets/marquee_ticker.dart';
+import '../widgets/article_grid_widget.dart';
 import '../screens/calculators_screen.dart';
 import '../screens/production_cost_screen.dart';
 import '../screens/farm_management_screen.dart';
 import '../screens/vaccine_info_screen.dart';
 import '../screens/poultry_diseases_screen.dart';
 
-class HomeTab extends StatefulWidget {
+class HomeTab extends ConsumerStatefulWidget {
   final bool isEnglish;
   final VoidCallback onOpenDetection;
+  final int subTabIndex;
+  final ValueChanged<int>? onSubTabChanged;
 
   const HomeTab({
     super.key,
     required this.isEnglish,
     required this.onOpenDetection,
+    this.subTabIndex = 0,
+    this.onSubTabChanged,
   });
 
   @override
-  State<HomeTab> createState() => _HomeTabState();
+  ConsumerState<HomeTab> createState() => _HomeTabState();
 }
 
-class _HomeTabState extends State<HomeTab> {
+class _HomeTabState extends ConsumerState<HomeTab> {
   final PoultryService _poultryService = PoultryService();
   final PageController _bannerController = PageController();
+  late PageController _subPageController;
   Timer? _bannerTimer;
-  Timer? _dateTimeTimer;
-  DateTime _now = DateTime.now();
   int _currentBannerIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _startDateTimeTimer();
+    _subPageController = PageController(initialPage: widget.subTabIndex);
   }
 
-  void _startDateTimeTimer() {
-    _dateTimeTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
-    });
+  @override
+  void didUpdateWidget(covariant HomeTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.subTabIndex != widget.subTabIndex) {
+      if (_subPageController.hasClients &&
+          _subPageController.page?.round() != widget.subTabIndex) {
+        _subPageController.animateToPage(
+          widget.subTabIndex,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    }
   }
 
   void _startBannerAutoSlide(int totalPages) {
@@ -66,53 +82,350 @@ class _HomeTabState extends State<HomeTab> {
   @override
   void dispose() {
     _bannerTimer?.cancel();
-    _dateTimeTimer?.cancel();
     _bannerController.dispose();
+    _subPageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isEng = widget.isEnglish;
+    final selectedSubTabIndex = ref.watch(navigationProvider).homeSubTabIndex;
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        // Top Tab Navigation Bar
+        _buildSubTabBar(isEng, selectedSubTabIndex),
+
+        const SizedBox(height: 4),
+
+        // Sub Tab Content PageView with Smooth Animations
+        Expanded(
+          child: PageView(
+            controller: _subPageController,
+            physics: const BouncingScrollPhysics(),
+            onPageChanged: (index) {
+              ref.read(navigationProvider.notifier).setHomeSubTab(index);
+              if (widget.onSubTabChanged != null) {
+                widget.onSubTabChanged!(index);
+              }
+            },
+            children: [
+              // Page 0: Default Home Dashboard
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    // 1. Dynamic Banner Carousel
+                    _buildBannerSection(),
+
+                    const SizedBox(height: 16),
+                    // 2. Date / Country / Time Card
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildDateTimeCard(isEng),
+                    ),
+
+                    const SizedBox(height: 20),
+                    // 3. Today's Wholesale Market Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildMarketSection(isEng),
+                    ),
+
+                    const SizedBox(height: 24),
+                    // 5. Six Feature Cards Grid
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildFeatureCardsGrid(context, isEng),
+                    ),
+
+                    const SizedBox(height: 24),
+                    // 6. Live General Articles & Guides Section
+                    _buildGeneralArticlesSection(isEng),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+
+              // Page 1: Parents Stock Grid
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildSectionHeader(
+                      title: isEng ? "Parents Stock Articles" : "প্যারেন্টস স্টক নিবন্ধ",
+                      subtitle: isEng
+                          ? "Breeder flock management, genetics & nutrition guides"
+                          : "ব্রিডার স্টক ব্যবস্থাপনা, প্রজনন ও খাদ্য নির্দেশিকা",
+                      icon: Icons.pets_rounded,
+                      color: Colors.indigo,
+                    ),
+                    StreamBuilder<List<Article>>(
+                      stream: _poultryService.getArticlesStream(category: 'parents_stock'),
+                      builder: (context, snapshot) {
+                        final liveArticles = snapshot.data;
+                        final articles = (liveArticles != null && liveArticles.isNotEmpty)
+                            ? liveArticles
+                            : Article.parentsStockArticles;
+                        return ArticleGridWidget(
+                          articles: articles,
+                          isEnglish: isEng,
+                          categoryTag: isEng ? "Parents Stock" : "প্যারেন্টস স্টক",
+                          categoryColor: Colors.indigo,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+
+              // Page 2: Hatchery Grid
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildSectionHeader(
+                      title: isEng ? "Hatchery Articles" : "হ্যাচারি নিবন্ধ",
+                      subtitle: isEng
+                          ? "Incubation parameters, egg candling & DOC care"
+                          : "ইনকিউবেশন, ডিম ক্যান্ডলিং ও একদিনের বাচ্চার পরিচর্যা",
+                      icon: Icons.egg_rounded,
+                      color: Colors.orange.shade800,
+                    ),
+                    StreamBuilder<List<Article>>(
+                      stream: _poultryService.getArticlesStream(category: 'hatchery'),
+                      builder: (context, snapshot) {
+                        final liveArticles = snapshot.data;
+                        final articles = (liveArticles != null && liveArticles.isNotEmpty)
+                            ? liveArticles
+                            : Article.hatcheryArticles;
+                        return ArticleGridWidget(
+                          articles: articles,
+                          isEnglish: isEng,
+                          categoryTag: isEng ? "Hatchery" : "হ্যাচারি",
+                          categoryColor: Colors.orange.shade800,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubTabBar(bool isEng, int selectedSubTabIndex) {
+    final tabs = [
+      {
+        'title': isEng ? "Default" : "ডিফল্ট",
+        'icon': Icons.space_dashboard_rounded,
+      },
+      {
+        'title': isEng ? "Parents Stock" : "প্যারেন্টস স্টক",
+        'icon': Icons.pets_rounded,
+      },
+      {
+        'title': isEng ? "Hatchery" : "হ্যাচারি",
+        'icon': Icons.egg_rounded,
+      },
+    ];
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color selectedColor = selectedSubTabIndex == 0
+        ? Colors.teal
+        : (selectedSubTabIndex == 1 ? Colors.indigo : Colors.orange.shade800);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      height: 48,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.teal.withOpacity(0.3)
+              : Colors.teal.withOpacity(0.18),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.teal.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final itemWidth = (constraints.maxWidth - 8) / 3;
+
+          return Stack(
+            children: [
+              // Smooth sliding background pill
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.easeInOutCubic,
+                left: 4 + (selectedSubTabIndex * itemWidth),
+                top: 4,
+                width: itemWidth,
+                height: 40,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  decoration: BoxDecoration(
+                    color: selectedColor,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: selectedColor.withOpacity(0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tab item labels & icons
+              Row(
+                children: List.generate(tabs.length, (index) {
+                  final item = tabs[index];
+                  final isSelected = selectedSubTabIndex == index;
+
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        _subPageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeInOutCubic,
+                        );
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedScale(
+                              duration: const Duration(milliseconds: 250),
+                              scale: isSelected ? 1.1 : 1.0,
+                              child: Icon(
+                                item['icon'] as IconData,
+                                size: 16,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark
+                                        ? Colors.white70
+                                        : Colors.grey.shade700),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 200),
+                                style: TextStyle(
+                                  fontSize: isSelected ? 12.5 : 12,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isDark
+                                          ? Colors.white70
+                                          : Colors.grey.shade700),
+                                ),
+                                child: Text(
+                                  item['title'] as String,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color, color.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          const SizedBox(height: 16),
-          // 1. Dynamic Banner Carousel
-          _buildBannerSection(),
-
-          const SizedBox(height: 16),
-          // 2. Date / Country / Time Card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: _buildDateTimeCard(isEng),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 26),
           ),
-
-          const SizedBox(height: 16),
-          // 3. Dynamic Announcement Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: _buildAnnouncementSection(isEng),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
-
-          const SizedBox(height: 20),
-          // 4. Today's Wholesale Market Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: _buildMarketSection(isEng),
-          ),
-
-          const SizedBox(height: 24),
-          // 5. Six Feature Cards Grid
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: _buildFeatureCardsGrid(context, isEng),
-          ),
-
-          const SizedBox(height: 32),
         ],
       ),
     );
@@ -254,17 +567,19 @@ class _HomeTabState extends State<HomeTab> {
 
   // --- 2. DATE / COUNTRY / TIME / DAILY CARD ---
   Widget _buildDateTimeCard(bool isEng) {
+    final now = ref.watch(currentTimeProvider).asData?.value ?? DateTime.now();
+
     final bnMonths = [
       'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
       'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
     ];
 
     String dateStr = isEng
-        ? "${_now.day} ${_getEngMonth(_now.month)} ${_now.year}"
-        : "${_toBnNum(_now.day)} ${bnMonths[_now.month - 1]} ${_toBnNum(_now.year)}";
+        ? "${now.day} ${_getEngMonth(now.month)} ${now.year}"
+        : "${_toBnNum(now.day)} ${bnMonths[now.month - 1]} ${_toBnNum(now.year)}";
 
-    int hour = _now.hour;
-    int minute = _now.minute;
+    int hour = now.hour;
+    int minute = now.minute;
     String period = isEng
         ? (hour >= 12 ? "PM" : "AM")
         : (hour < 6 ? "রাত" : (hour < 12 ? "সকাল" : (hour < 16 ? "দুপুর" : (hour < 18 ? "বিকেল" : "সন্ধ্যা/রাত"))));
@@ -360,6 +675,37 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  Widget _buildGeneralArticlesSection(bool isEng) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          title: isEng ? "Poultry Management Articles" : "পোল্ট্রি ব্যবস্থাপনা নিবন্ধ ও গাইড",
+          subtitle: isEng
+              ? "Expert advice, seasonal care & nutrition guides"
+              : "বিশেষজ্ঞদের পরামর্শ, পুষ্টি ব্যবস্থাপনা ও পরিচর্যা নির্দেশিকা",
+          icon: Icons.menu_book_rounded,
+          color: Colors.teal,
+        ),
+        StreamBuilder<List<Article>>(
+          stream: _poultryService.getArticlesStream(category: 'general'),
+          builder: (context, snapshot) {
+            final liveArticles = snapshot.data;
+            final articles = (liveArticles != null && liveArticles.isNotEmpty)
+                ? liveArticles
+                : Article.mockArticles;
+            return ArticleGridWidget(
+              articles: articles,
+              isEnglish: isEng,
+              categoryTag: isEng ? "General Guide" : "পোল্ট্রি গাইড",
+              categoryColor: Colors.teal,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   String _getEngMonth(int m) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[m - 1];
@@ -414,8 +760,12 @@ class _HomeTabState extends State<HomeTab> {
   String _selectedMarketCategory = 'all';
   String _selectedLivestockSubCategory = 'all';
 
-  // --- 4. TODAY'S WHOLESALE MARKET SECTION ---
+  // --- 3. TODAY'S WHOLESALE MARKET SECTION ---
   Widget _buildMarketSection(bool isEng) {
+    final marketFilter = ref.watch(homeMarketFilterProvider);
+    final selectedCategory = marketFilter.category;
+    final selectedSubCategory = marketFilter.subCategory;
+
     return StreamBuilder<List<MarketCategoryPrice>>(
       stream: _poultryService.getMarketPricesStream(),
       builder: (context, snapshot) {
@@ -501,26 +851,23 @@ class _HomeTabState extends State<HomeTab> {
                       children: [
                         ChoiceChip(
                           label: Text(isEng ? "All" : "সবকটি"),
-                          selected: _selectedMarketCategory == 'all',
+                          selected: selectedCategory == 'all',
                           selectedColor: Colors.teal,
                           labelStyle: TextStyle(
-                            color: _selectedMarketCategory == 'all' ? Colors.white : Colors.black87,
+                            color: selectedCategory == 'all' ? Colors.white : Colors.black87,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
                           onSelected: (val) {
                             if (val) {
-                              setState(() {
-                                _selectedMarketCategory = 'all';
-                                _selectedLivestockSubCategory = 'all';
-                              });
+                              ref.read(homeMarketFilterProvider.notifier).setCategory('all');
                             }
                           },
                         ),
                         const SizedBox(width: 6),
                         ...categories.map((cat) {
                           final title = isEng ? cat.titleEn : cat.titleBn;
-                          final isSelected = _selectedMarketCategory == cat.id;
+                          final isSelected = selectedCategory == cat.id;
                           return Padding(
                             padding: const EdgeInsets.only(right: 6.0),
                             child: ChoiceChip(
@@ -534,10 +881,7 @@ class _HomeTabState extends State<HomeTab> {
                               ),
                               onSelected: (val) {
                                 if (val) {
-                                  setState(() {
-                                    _selectedMarketCategory = cat.id;
-                                    _selectedLivestockSubCategory = 'all';
-                                  });
+                                  ref.read(homeMarketFilterProvider.notifier).setCategory(cat.id);
                                 }
                               },
                             ),
@@ -548,7 +892,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
 
                   // --- 2. LIVESTOCK SUB-CATEGORY SELECTOR (IF CHICKEN IS SELECTED) ---
-                  if (_selectedMarketCategory == 'chicken') ...[
+                  if (selectedCategory == 'chicken') ...[
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -574,12 +918,12 @@ class _HomeTabState extends State<HomeTab> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                _buildSubCategoryChip("all", isEng ? "All Breeds" : "সব জাত", isEng),
-                                _buildSubCategoryChip("ব্রয়লার", "ব্রয়লার", isEng),
-                                _buildSubCategoryChip("সোনালী", "সোনালী", isEng),
-                                _buildSubCategoryChip("দেশি", "দেশি", isEng),
-                                _buildSubCategoryChip("লেয়ার", "লেয়ার", isEng),
-                                _buildSubCategoryChip("কক", "কক/ককরেল", isEng),
+                                _buildSubCategoryChip("all", isEng ? "All Breeds" : "সব জাত", isEng, selectedSubCategory),
+                                _buildSubCategoryChip("ব্রয়লার", "ব্রয়লার", isEng, selectedSubCategory),
+                                _buildSubCategoryChip("সোনালী", "সোনালী", isEng, selectedSubCategory),
+                                _buildSubCategoryChip("দেশি", "দেশি", isEng, selectedSubCategory),
+                                _buildSubCategoryChip("লেয়ার", "লেয়ার", isEng, selectedSubCategory),
+                                _buildSubCategoryChip("কক", "কক/ককরেল", isEng, selectedSubCategory),
                               ],
                             ),
                           ),
@@ -591,14 +935,14 @@ class _HomeTabState extends State<HomeTab> {
                   const SizedBox(height: 12),
 
                   // --- 3. CATEGORY CONTENT RENDER ---
-                  if (_selectedMarketCategory == 'all')
+                  if (selectedCategory == 'all')
                     Column(
                       children: categories.map((cat) => _buildMarketCategoryRow(cat, isEng)).toList(),
                     )
                   else ...[
                     ...categories
-                        .where((cat) => cat.id == _selectedMarketCategory)
-                        .map((cat) => _buildDetailedCategoryView(cat, isEng)),
+                        .where((cat) => cat.id == selectedCategory)
+                        .map((cat) => _buildDetailedCategoryView(cat, isEng, selectedSubCategory)),
                   ],
                 ],
               ],
@@ -609,8 +953,8 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildSubCategoryChip(String id, String label, bool isEng) {
-    final isSelected = _selectedLivestockSubCategory == id;
+  Widget _buildSubCategoryChip(String id, String label, bool isEng, String selectedSubCategory) {
+    final isSelected = selectedSubCategory == id;
     return Padding(
       padding: const EdgeInsets.only(right: 6.0),
       child: FilterChip(
@@ -623,19 +967,17 @@ class _HomeTabState extends State<HomeTab> {
           fontSize: 11,
         ),
         onSelected: (val) {
-          setState(() {
-            _selectedLivestockSubCategory = val ? id : 'all';
-          });
+          ref.read(homeMarketFilterProvider.notifier).setSubCategory(val ? id : 'all');
         },
       ),
     );
   }
 
-  Widget _buildDetailedCategoryView(MarketCategoryPrice cat, bool isEng) {
+  Widget _buildDetailedCategoryView(MarketCategoryPrice cat, bool isEng, String selectedSubCategory) {
     var filteredItems = cat.items;
-    if (cat.id == 'chicken' && _selectedLivestockSubCategory != 'all') {
+    if (cat.id == 'chicken' && selectedSubCategory != 'all') {
       filteredItems = cat.items
-          .where((i) => i.name.toLowerCase().contains(_selectedLivestockSubCategory.toLowerCase()))
+          .where((i) => i.name.toLowerCase().contains(selectedSubCategory.toLowerCase()))
           .toList();
     }
 
