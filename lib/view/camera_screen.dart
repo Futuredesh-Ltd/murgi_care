@@ -2,10 +2,12 @@
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 import 'package:image/image.dart' as img;
+import '../controller/riverpod_providers.dart';
 
-class CameraScanScreen extends StatefulWidget {
+class CameraScanScreen extends ConsumerStatefulWidget {
   final List<CameraDescription> cameras;
   final bool isEnglish;
   const CameraScanScreen({
@@ -15,14 +17,12 @@ class CameraScanScreen extends StatefulWidget {
   });
 
   @override
-  State<CameraScanScreen> createState() => _CameraScanScreenState();
+  ConsumerState<CameraScanScreen> createState() => _CameraScanScreenState();
 }
 
-class _CameraScanScreenState extends State<CameraScanScreen> {
+class _CameraScanScreenState extends ConsumerState<CameraScanScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
-  final List<File> _capturedPhotos = [];
-  bool _isTaking = false;
 
   @override
   void initState() {
@@ -38,11 +38,10 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
   }
 
   Future<void> _takeAndCropPicture() async {
-    if (_isTaking || _capturedPhotos.length >= 3) return;
+    final cameraState = ref.read(cameraScanProvider);
+    if (cameraState.isTaking || cameraState.capturedPhotos.length >= 3) return;
 
-    setState(() {
-      _isTaking = true;
-    });
+    ref.read(cameraScanProvider.notifier).setIsTaking(true);
 
     try {
       await _initializeControllerFuture;
@@ -67,29 +66,34 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
           height: size,
         );
 
-        final croppedFile = File(photo.path)..writeAsBytesSync(img.encodeJpg(cropped));
-        
-        setState(() {
-          _capturedPhotos.add(croppedFile);
-        });
+        final croppedFile =
+            File(photo.path)..writeAsBytesSync(img.encodeJpg(cropped));
 
-        if (_capturedPhotos.length == 3) {
-          if (mounted) Navigator.pop(context, _capturedPhotos);
+        ref.read(cameraScanProvider.notifier).addPhoto(croppedFile);
+        final currentCount = ref.read(cameraScanProvider).capturedPhotos.length;
+
+        if (currentCount == 3) {
+          if (mounted) {
+            final photos = ref.read(cameraScanProvider).capturedPhotos;
+            Navigator.pop(context, photos);
+          }
         }
       }
     } catch (e) {
       debugPrint("Camera error: $e");
     } finally {
       if (mounted) {
-        setState(() {
-          _isTaking = false;
-        });
+        ref.read(cameraScanProvider.notifier).setIsTaking(false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cameraState = ref.watch(cameraScanProvider);
+    final capturedPhotos = cameraState.capturedPhotos;
+    final isTaking = cameraState.isTaking;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: FutureBuilder<void>(
@@ -153,8 +157,8 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                     children: [
                       Text(
                         widget.isEnglish
-                            ? "Step ${_capturedPhotos.length + 1} of 3"
-                            : "ধাপ ${ _capturedPhotos.length + 1} / ৩",
+                            ? "Step ${capturedPhotos.length + 1} of 3"
+                            : "ধাপ ${capturedPhotos.length + 1} / ৩",
                         style: const TextStyle(
                           color: Colors.teal,
                           fontSize: 16,
@@ -185,7 +189,7 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(3, (index) {
-                      bool hasPhoto = index < _capturedPhotos.length;
+                      bool hasPhoto = index < capturedPhotos.length;
                       return Container(
                         width: 60,
                         height: 60,
@@ -202,7 +206,7 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(6),
                                 child: Image.file(
-                                  _capturedPhotos[index],
+                                  capturedPhotos[index],
                                   fit: BoxFit.cover,
                                 ),
                               )
@@ -222,14 +226,14 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                   right: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: _isTaking ? null : _takeAndCropPicture,
+                      onTap: isTaking ? null : _takeAndCropPicture,
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: _isTaking
+                        child: isTaking
                             ? const SizedBox(
                                 width: 75,
                                 height: 75,
@@ -247,13 +251,14 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Back Button
                 Positioned(
                   top: 40,
                   left: 20,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
