@@ -1,16 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:murgi_care/controller/controller.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controller/riverpod_providers.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = FirebaseAuth.instance.currentUser;
-    final isEnglish = context.read<DiseaseProvider>().isEnglish;
+    final isEnglish = ref.read(diseaseRiverpodProvider).isEnglish;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Light background for contrast
