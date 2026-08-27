@@ -1,127 +1,127 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:murgi_care/controller/controller.dart';
 import 'package:murgi_care/model/multi_result.dart';
 import 'package:murgi_care/view/widgets/custom_widgets.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:murgi_care/model/dissease_info.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/animated_action_button.dart';
+import '../../controller/riverpod_providers.dart';
 
-class DetectionTab extends StatefulWidget {
+class DetectionTab extends ConsumerWidget {
   final Future<void> Function(BuildContext, bool) showLoginDialog;
 
   const DetectionTab({super.key, required this.showLoginDialog});
 
   @override
-  State<DetectionTab> createState() => _DetectionTabState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(diseaseRiverpodProvider);
+    final detectionState = ref.watch(detectionTabProvider);
 
-class _DetectionTabState extends State<DetectionTab> {
-  int? _selectedPhotoIndex;
-  bool _showResults = false;
+    // Reset selection if new analysis starts
+    if (provider.loading || provider.image == null) {
+      if (detectionState.selectedPhotoIndex != null || detectionState.showResults) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(detectionTabProvider.notifier).reset();
+        });
+      }
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<DiseaseProvider>(
-      builder: (context, provider, child) {
-        // Reset selection if new analysis starts
-        if (provider.loading || provider.image == null) {
-          _selectedPhotoIndex = null;
-          _showResults = false;
-        }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Image Display Section
+          _buildImageSection(context, ref, provider, detectionState),
+          const SizedBox(height: 32),
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          // Result Section
+          _buildResultSection(context, ref, provider, detectionState),
+
+          const SizedBox(height: 40),
+
+          // Action Buttons (Camera + Gallery)
+          Row(
             children: [
-              // Image Display Section
-              _buildImageSection(context, provider),
-              const SizedBox(height: 32),
-
-              // Result Section
-              _buildResultSection(context, provider),
-
-              const SizedBox(height: 40),
-
-              // Action Buttons (Camera + Gallery)
-              Row(
-                children: [
-                  Expanded(
-                    child: AnimatedActionButton(
-                      icon: Icons.camera_alt_rounded,
-                      label: provider.isEnglish ? "Camera" : "ক্যামেরা",
-                      color: Colors.teal,
-                      onTap: () async {
-                        final status = await provider.pickMultipleImages(
-                          ImageSource.camera,
-                          context,
-                        );
-                        if (status == PickImageStatus.limitReached &&
-                            context.mounted) {
-                          widget.showLoginDialog(context, provider.isEnglish);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: AnimatedActionButton(
-                      icon: Icons.photo_library_rounded,
-                      label: provider.isEnglish ? "Gallery" : "গ্যালারি",
-                      color: Colors.indigo,
-                      onTap: () async {
-                        final status = await provider.pickMultipleImages(
-                          ImageSource.gallery,
-                          context,
-                        );
-                        if (status == PickImageStatus.limitReached &&
-                            context.mounted) {
-                          widget.showLoginDialog(context, provider.isEnglish);
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              const Divider(),
-              const SizedBox(height: 16),
-
-              // Footer Items
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  CustomWidgets.buildFooterItem(
-                    icon: Icons.report_problem_outlined,
-                    label: provider.isEnglish ? "Caution" : "সতর্কতা",
-                    color: Colors.orange,
-                    onTap: () => CustomWidgets.showDisclaimer(
+              Expanded(
+                child: AnimatedActionButton(
+                  icon: Icons.camera_alt_rounded,
+                  label: provider.isEnglish ? "Camera" : "ক্যামেরা",
+                  color: Colors.teal,
+                  onTap: () async {
+                    final status = await provider.pickMultipleImages(
+                      ImageSource.camera,
                       context,
-                      provider.isEnglish,
-                    ),
-                  ),
-                  CustomWidgets.buildFooterItem(
-                    icon: Icons.info_outline,
-                    label: provider.isEnglish ? "About" : "তথ্য",
-                    color: Colors.indigo,
-                    onTap: () =>
-                        CustomWidgets.showAboutUs(context, provider.isEnglish),
-                  ),
-                ],
+                    );
+                    if (status == PickImageStatus.limitReached &&
+                        context.mounted) {
+                      showLoginDialog(context, provider.isEnglish);
+                    }
+                  },
+                ),
               ),
-              const SizedBox(height: 25),
+              const SizedBox(width: 16),
+              Expanded(
+                child: AnimatedActionButton(
+                  icon: Icons.photo_library_rounded,
+                  label: provider.isEnglish ? "Gallery" : "গ্যালারি",
+                  color: Colors.indigo,
+                  onTap: () async {
+                    final status = await provider.pickMultipleImages(
+                      ImageSource.gallery,
+                      context,
+                    );
+                    if (status == PickImageStatus.limitReached &&
+                        context.mounted) {
+                      showLoginDialog(context, provider.isEnglish);
+                    }
+                  },
+                ),
+              ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 32),
+
+          const Divider(),
+          const SizedBox(height: 16),
+
+          // Footer Items
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              CustomWidgets.buildFooterItem(
+                icon: Icons.report_problem_outlined,
+                label: provider.isEnglish ? "Caution" : "সতর্কতা",
+                color: Colors.orange,
+                onTap: () => CustomWidgets.showDisclaimer(
+                  context,
+                  provider.isEnglish,
+                ),
+              ),
+              CustomWidgets.buildFooterItem(
+                icon: Icons.info_outline,
+                label: provider.isEnglish ? "About" : "তথ্য",
+                color: Colors.indigo,
+                onTap: () =>
+                    CustomWidgets.showAboutUs(context, provider.isEnglish),
+              ),
+            ],
+          ),
+          const SizedBox(height: 25),
+        ],
+      ),
     );
   }
 
-  Widget _buildImageSection(BuildContext context, DiseaseProvider provider) {
+  Widget _buildImageSection(
+    BuildContext context,
+    WidgetRef ref,
+    DiseaseProvider provider,
+    DetectionTabState detectionState,
+  ) {
     if (provider.image == null && provider.images.isEmpty) {
       return Container(
         height: 300,
@@ -164,8 +164,9 @@ class _DetectionTabState extends State<DetectionTab> {
       );
     }
 
-    final displayImage = _selectedPhotoIndex != null
-        ? provider.images[_selectedPhotoIndex!]
+    final selectedIndex = detectionState.selectedPhotoIndex;
+    final displayImage = selectedIndex != null
+        ? provider.images[selectedIndex]
         : provider.image!;
 
     return Column(
@@ -194,17 +195,15 @@ class _DetectionTabState extends State<DetectionTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(provider.images.length, (index) {
-              bool isSelected = _selectedPhotoIndex == index;
+              bool isSelected = selectedIndex == index;
               return GestureDetector(
                 onTap: () {
-                  setState(() {
-                    _showResults = true; // Auto reveal when thumbnail clicked
-                    if (_selectedPhotoIndex == index) {
-                      _selectedPhotoIndex = null; // Toggle off individual
-                    } else {
-                      _selectedPhotoIndex = index;
-                    }
-                  });
+                  ref.read(detectionTabProvider.notifier).setShowResults(true);
+                  if (selectedIndex == index) {
+                    ref.read(detectionTabProvider.notifier).setSelectedPhotoIndex(null);
+                  } else {
+                    ref.read(detectionTabProvider.notifier).setSelectedPhotoIndex(index);
+                  }
                 },
                 child: Container(
                   width: 65,
@@ -239,12 +238,12 @@ class _DetectionTabState extends State<DetectionTab> {
           const SizedBox(height: 8),
           Text(
             provider.isEnglish
-                ? (_selectedPhotoIndex == null
+                ? (selectedIndex == null
                       ? "Select photo to see individual result"
-                      : "Photo ${_selectedPhotoIndex! + 1} Selected")
-                : (_selectedPhotoIndex == null
+                      : "Photo ${selectedIndex + 1} Selected")
+                : (selectedIndex == null
                       ? "ব্যক্তিগত ফলাফল দেখতে ফটো নির্বাচন করুন"
-                      : "ফটো ${_selectedPhotoIndex! + 1} নির্বাচিত"),
+                      : "ফটো ${selectedIndex + 1} নির্বাচিত"),
             style: TextStyle(
               fontSize: 12,
               color: Colors.teal.withOpacity(0.8),
@@ -256,7 +255,12 @@ class _DetectionTabState extends State<DetectionTab> {
     );
   }
 
-  Widget _buildResultSection(BuildContext context, DiseaseProvider provider) {
+  Widget _buildResultSection(
+    BuildContext context,
+    WidgetRef ref,
+    DiseaseProvider provider,
+    DetectionTabState detectionState,
+  ) {
     if (provider.loading) {
       return Column(
         children: [
@@ -276,11 +280,12 @@ class _DetectionTabState extends State<DetectionTab> {
       return AnimatedCrossFade(
         firstChild: _buildSummaryCard(
           context,
+          ref,
           provider.multiResult!,
           provider.isEnglish,
         ),
-        secondChild: _buildDetailedResults(context, provider),
-        crossFadeState: _showResults
+        secondChild: _buildDetailedResults(context, ref, provider, detectionState),
+        crossFadeState: detectionState.showResults
             ? CrossFadeState.showSecond
             : CrossFadeState.showFirst,
         duration: const Duration(milliseconds: 400),
@@ -288,7 +293,7 @@ class _DetectionTabState extends State<DetectionTab> {
     }
 
     if (provider.outputs != null && provider.outputs!.isNotEmpty) {
-      return _buildDetailedResults(context, provider);
+      return _buildDetailedResults(context, ref, provider, detectionState);
     }
 
     return Center(
@@ -304,12 +309,13 @@ class _DetectionTabState extends State<DetectionTab> {
 
   Widget _buildSummaryCard(
     BuildContext context,
+    WidgetRef ref,
     MultiAnalysisResult multi,
     bool isEnglish,
   ) {
     return Center(
       child: GestureDetector(
-        onTap: () => setState(() => _showResults = true),
+        onTap: () => ref.read(detectionTabProvider.notifier).setShowResults(true),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
@@ -397,13 +403,20 @@ class _DetectionTabState extends State<DetectionTab> {
     );
   }
 
-  Widget _buildDetailedResults(BuildContext context, DiseaseProvider provider) {
+  Widget _buildDetailedResults(
+    BuildContext context,
+    WidgetRef ref,
+    DiseaseProvider provider,
+    DetectionTabState detectionState,
+  ) {
+    final selectedIndex = detectionState.selectedPhotoIndex;
+
     if (provider.multiResult != null) {
       final multi = provider.multiResult!;
-      final resultToShow = _selectedPhotoIndex != null
-          ? multi.individualResults[_selectedPhotoIndex!]
+      final resultToShow = selectedIndex != null
+          ? multi.individualResults[selectedIndex]
           : multi.primary;
-      final isAggregated = _selectedPhotoIndex == null;
+      final isAggregated = selectedIndex == null;
 
       final diagnosisId = _getCleanId(resultToShow.label);
       final isDisease = diagnosisId != "healthy" && diagnosisId != "others";
@@ -428,8 +441,8 @@ class _DetectionTabState extends State<DetectionTab> {
                 Expanded(
                   child: Text(
                     provider.isEnglish
-                        ? "Individual Result (Photo ${_selectedPhotoIndex! + 1})"
-                        : "ব্যক্তিগত ফলাফল (ফটো ${_selectedPhotoIndex! + 1})",
+                        ? "Individual Result (Photo ${selectedIndex + 1})"
+                        : "ব্যক্তিগত ফলাফল (ফটো ${selectedIndex + 1})",
                     style: const TextStyle(
                       color: Colors.teal,
                       fontWeight: FontWeight.bold,
@@ -440,7 +453,9 @@ class _DetectionTabState extends State<DetectionTab> {
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed: () => setState(() => _selectedPhotoIndex = null),
+                  onPressed: () => ref
+                      .read(detectionTabProvider.notifier)
+                      .setSelectedPhotoIndex(null),
                   child: Text(
                     provider.isEnglish ? "Show Summary" : "সারসংক্ষেপ দেখুন",
                     style: const TextStyle(fontSize: 12),
@@ -583,8 +598,7 @@ class _DetectionTabState extends State<DetectionTab> {
     final Uri whatsappUri = Uri.parse(
       "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}",
     );
-    
-    // Fallback scheme for direct app launch
+
     final Uri whatsappAppUri = Uri.parse(
       "whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}",
     );
@@ -735,7 +749,6 @@ class _DetectionTabState extends State<DetectionTab> {
     );
   }
 
-  // --- Legacy helper for backward compatibility ---
   Widget _buildResultCardLegacy(
     BuildContext context,
     dynamic output,
@@ -799,23 +812,23 @@ class _DetectionTabState extends State<DetectionTab> {
     if (clean.contains('cocci')) return 'cocci';
     if (clean.contains('ncd')) return 'ncd';
     if (clean.contains('salmo')) return 'salmo';
-    if (clean.contains('healthy')) return 'healthy';
     if (clean.contains('crd')) return 'crd';
-    if (clean.contains('fowlpox')) return 'fowlpox';
-    if (clean.contains('bumblefoot')) return 'bumblefoot';
+    if (clean.contains('pox')) return 'fowlpox';
+    if (clean.contains('bumble')) return 'bumblefoot';
     if (clean.contains('coryza')) return 'coryza';
+    if (clean.contains('healthy')) return 'healthy';
     return clean;
   }
 
   String _formatLabel(String label, bool isEnglish) {
     String clean = _getCleanId(label);
     switch (clean) {
-      case 'others':
-        return isEnglish ? 'Invalid Image' : 'সঠিক ছবি নয়';
-      case 'cocci':
-        return isEnglish ? 'Coccidiosis' : 'রক্ত আমাশয়';
       case 'healthy':
-        return isEnglish ? 'Healthy' : 'সুস্থ মুরগি';
+        return isEnglish ? 'Healthy Chicken' : 'সুস্থ মুরগি';
+      case 'others':
+        return isEnglish ? 'Non-Poultry Image' : 'অপ্রাসঙ্গিক ছবি';
+      case 'cocci':
+        return isEnglish ? 'Coccidiosis' : 'ককসিডিওসিস (রক্ত আমাশয়)';
       case 'ncd':
         return isEnglish ? 'Newcastle Disease' : 'রানীক্ষেত';
       case 'salmo':
