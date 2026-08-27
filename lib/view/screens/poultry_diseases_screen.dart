@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../model/dissease_info.dart';
+import '../../controller/riverpod_providers.dart';
 
-class PoultryDiseasesScreen extends StatefulWidget {
+class PoultryDiseasesScreen extends ConsumerWidget {
   final bool isEnglish;
 
   const PoultryDiseasesScreen({super.key, required this.isEnglish});
 
   @override
-  State<PoultryDiseasesScreen> createState() => _PoultryDiseasesScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isEng = isEnglish;
+    final searchQuery = ref.watch(poultryDiseasesSearchProvider);
 
-class _PoultryDiseasesScreenState extends State<PoultryDiseasesScreen> {
-  String _searchQuery = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final isEng = widget.isEnglish;
     final entries = diseaseInfo.entries.where((e) {
       final val = e.value;
       final name = isEng ? (val['name_en'] ?? '') : (val['name'] ?? '');
-      return name.toLowerCase().contains(_searchQuery.toLowerCase());
+      return name.toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
 
     return Scaffold(
@@ -33,11 +30,14 @@ class _PoultryDiseasesScreenState extends State<PoultryDiseasesScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              onChanged: (val) => setState(() => _searchQuery = val),
+              onChanged: (val) => ref
+                  .read(poultryDiseasesSearchProvider.notifier)
+                  .setSearchQuery(val),
               decoration: InputDecoration(
                 hintText: isEng ? "Search disease..." : "রোগের নাম দিয়ে খুঁজুন...",
                 prefixIcon: const Icon(Icons.search, color: Colors.teal),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                 filled: true,
                 fillColor: Theme.of(context).cardColor,
               ),
@@ -50,22 +50,28 @@ class _PoultryDiseasesScreenState extends State<PoultryDiseasesScreen> {
               itemBuilder: (context, index) {
                 final item = entries[index].value;
                 final name = isEng ? item['name_en'] : item['name'];
-                final symptoms = isEng ? item['symptoms_en'] : item['symptoms'];
-                final prevention = isEng ? item['prevention_en'] : item['prevention'];
-                final treatment = isEng ? item['treatment_en'] : item['treatment'];
+                final symptoms =
+                    isEng ? item['symptoms_en'] : item['symptoms'];
+                final prevention =
+                    isEng ? item['prevention_en'] : item['prevention'];
+                final treatment =
+                    isEng ? item['treatment_en'] : item['treatment'];
 
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.only(bottom: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: ExpansionTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.redAccent.withOpacity(0.15),
-                      child: const Icon(Icons.coronavirus_outlined, color: Colors.redAccent),
+                      child: const Icon(Icons.coronavirus_outlined,
+                          color: Colors.redAccent),
                     ),
                     title: Text(
                       name ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     children: [
                       Padding(
@@ -110,7 +116,8 @@ class _PoultryDiseasesScreenState extends State<PoultryDiseasesScreen> {
       children: [
         Text(
           title,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 14, color: titleColor),
         ),
         const SizedBox(height: 4),
         Text(
