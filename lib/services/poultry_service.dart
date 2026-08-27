@@ -9,6 +9,7 @@ import '../model/market_price_model.dart';
 import '../model/doctor_model.dart';
 import '../model/supplier_model.dart';
 import '../model/daily_card_model.dart';
+import '../model/article.dart';
 
 class PoultryService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -36,6 +37,16 @@ class PoultryService {
       // Seed Suppliers
       for (var s in _defaultSuppliers(null)) {
         await _db.collection('suppliers').add(s.toMap());
+      }
+      // Seed Articles
+      for (var art in Article.mockArticles) {
+        await _db.collection('articles').add(art.toMap());
+      }
+      for (var art in Article.parentsStockArticles) {
+        await _db.collection('articles').add(art.copyWithCategory('parents_stock').toMap());
+      }
+      for (var art in Article.hatcheryArticles) {
+        await _db.collection('articles').add(art.copyWithCategory('hatchery').toMap());
       }
       // Seed Daily Card
       await updateDailyCard(DailyCardInfo(
@@ -518,6 +529,72 @@ class PoultryService {
       return true;
     } catch (e) {
       debugPrint("deleteSupplier error: $e");
+      return false;
+    }
+  }
+
+  // --- ARTICLES ---
+  Future<String?> uploadArticleImage(File imageFile) async {
+    try {
+      final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}_${imageFile.hashCode}.jpg';
+      final ref = _storage.ref().child('articles').child(fileName);
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      final uploadTask = ref.putFile(imageFile, metadata);
+      final snapshot = await uploadTask.whenComplete(() {});
+
+      if (snapshot.state == TaskState.success) {
+        return await snapshot.ref.getDownloadURL();
+      }
+    } catch (_) {}
+
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final base64Str = base64Encode(bytes);
+      return 'data:image/jpeg;base64,$base64Str';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Stream<List<Article>> getArticlesStream({String? category}) {
+    Query query = _db.collection('articles');
+    if (category != null && category.isNotEmpty && category != 'all') {
+      query = query.where('category', isEqualTo: category);
+    }
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Article.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+      }).toList();
+    });
+  }
+
+  Future<bool> addArticle(Article article) async {
+    try {
+      await _db.collection('articles').add(article.toMap());
+      return true;
+    } catch (e) {
+      debugPrint("addArticle error: $e");
+      return false;
+    }
+  }
+
+  Future<bool> updateArticle(String id, Map<String, dynamic> data) async {
+    try {
+      await _db.collection('articles').doc(id).update(data);
+      return true;
+    } catch (e) {
+      debugPrint("updateArticle error: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteArticle(String id) async {
+    try {
+      await _db.collection('articles').doc(id).delete();
+      return true;
+    } catch (e) {
+      debugPrint("deleteArticle error: $e");
       return false;
     }
   }
