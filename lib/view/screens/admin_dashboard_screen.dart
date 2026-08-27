@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,8 @@ import '../../model/doctor_model.dart';
 import '../../model/supplier_model.dart';
 import '../../model/market_price_model.dart';
 import '../../model/daily_card_model.dart';
+import '../../model/article.dart';
+import '../../controller/riverpod_providers.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   final bool isEnglish;
@@ -38,7 +41,7 @@ class AdminDashboardScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-          length: 6,
+          length: 7,
           child: Scaffold(
             appBar: AppBar(
               title: Text(isEnglish ? "Admin Control Panel" : "এডমিন কন্ট্রোল প্যানেল"),
@@ -67,6 +70,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white70,
                 tabs: [
+                  Tab(text: isEnglish ? "Articles / Posts" : "নিবন্ধ ও আর্টিকেলে প্রকাশ"),
                   Tab(text: isEnglish ? "Wholesale Market" : "আজকের পাইকারি বাজার"),
                   Tab(text: isEnglish ? "Photo Banners" : "ছবি স্লাইডার (ব্যানার)"),
                   Tab(text: isEnglish ? "Daily Card Details" : "দৈনিক কার্ড বিবরণ"),
@@ -78,6 +82,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
             body: const TabBarView(
               children: [
+                AdminArticlesTab(),
                 AdminMarketPricesTab(),
                 AdminBannersTab(),
                 AdminDailyCardTab(),
@@ -724,14 +729,14 @@ class AdminBannersTab extends StatelessWidget {
 }
 
 // --- 3. ADMIN DAILY CARD DETAILS (DAILY CARD UPDATER) ---
-class AdminDailyCardTab extends StatefulWidget {
+class AdminDailyCardTab extends ConsumerStatefulWidget {
   const AdminDailyCardTab({super.key});
 
   @override
-  State<AdminDailyCardTab> createState() => _AdminDailyCardTabState();
+  ConsumerState<AdminDailyCardTab> createState() => _AdminDailyCardTabState();
 }
 
-class _AdminDailyCardTabState extends State<AdminDailyCardTab> {
+class _AdminDailyCardTabState extends ConsumerState<AdminDailyCardTab> {
   final _service = PoultryService();
   final _countryCtrl = TextEditingController();
   final _dateCtrl = TextEditingController();
@@ -739,22 +744,23 @@ class _AdminDailyCardTabState extends State<AdminDailyCardTab> {
   final _tipCtrl = TextEditingController();
   final _weatherCtrl = TextEditingController();
 
-  bool _isLoaded = false;
-  bool _isSaving = false;
-
   void _loadData(DailyCardInfo info) {
-    if (!_isLoaded) {
+    final adminState = ref.read(adminDashboardProvider);
+    if (!adminState.isLoaded) {
       _countryCtrl.text = info.country;
       _dateCtrl.text = info.dateText;
       _timeCtrl.text = info.timeText;
       _tipCtrl.text = info.dailyTip;
       _weatherCtrl.text = info.weather;
-      _isLoaded = true;
+      ref.read(adminDashboardProvider.notifier).setIsLoaded(true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final adminState = ref.watch(adminDashboardProvider);
+    final isSaving = adminState.isSaving;
+
     return Scaffold(
       body: StreamBuilder<DailyCardInfo>(
         stream: _service.getDailyCardStream(),
@@ -851,32 +857,32 @@ class _AdminDailyCardTabState extends State<AdminDailyCardTab> {
                 TextField(
                   controller: _countryCtrl,
                   decoration: const InputDecoration(labelText: "দেশ / এলাকা (Country)", border: OutlineInputBorder(), prefixIcon: Icon(Icons.flag)),
-                  onChanged: (val) => setState(() {}),
+                  onChanged: (val) => ref.read(adminDashboardProvider.notifier).touch(),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _dateCtrl,
                   decoration: const InputDecoration(labelText: "তারিখ টেক্সট (যেমন: ২৫ আগস্ট ২০২৬)", border: OutlineInputBorder(), prefixIcon: Icon(Icons.calendar_month)),
-                  onChanged: (val) => setState(() {}),
+                  onChanged: (val) => ref.read(adminDashboardProvider.notifier).touch(),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _timeCtrl,
                   decoration: const InputDecoration(labelText: "সময় টেক্সট (যেমন: দুপুর ২:৩০)", border: OutlineInputBorder(), prefixIcon: Icon(Icons.timer)),
-                  onChanged: (val) => setState(() {}),
+                  onChanged: (val) => ref.read(adminDashboardProvider.notifier).touch(),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _tipCtrl,
                   maxLines: 2,
                   decoration: const InputDecoration(labelText: "আজকের খামার টিপস / পরামর্শ (Daily Advice)", border: OutlineInputBorder(), prefixIcon: Icon(Icons.tips_and_updates)),
-                  onChanged: (val) => setState(() {}),
+                  onChanged: (val) => ref.read(adminDashboardProvider.notifier).touch(),
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _weatherCtrl,
                   decoration: const InputDecoration(labelText: "আবহাওয়া বিবরণ (Weather)", border: OutlineInputBorder(), prefixIcon: Icon(Icons.cloud)),
-                  onChanged: (val) => setState(() {}),
+                  onChanged: (val) => ref.read(adminDashboardProvider.notifier).touch(),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -884,12 +890,12 @@ class _AdminDailyCardTabState extends State<AdminDailyCardTab> {
                   height: 50,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                    icon: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save, color: Colors.white),
-                    label: Text(_isSaving ? "সংরক্ষণ করা হচ্ছে..." : "ফায়ারস্টোরে সেভ করুন", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                    onPressed: _isSaving
+                    icon: isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save, color: Colors.white),
+                    label: Text(isSaving ? "সংরক্ষণ করা হচ্ছে..." : "ফায়ারস্টোরে সেভ করুন", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    onPressed: isSaving
                         ? null
                         : () async {
-                            setState(() => _isSaving = true);
+                            ref.read(adminDashboardProvider.notifier).setIsSaving(true);
                             await _service.updateDailyCard(
                               DailyCardInfo(
                                 id: 'today',
@@ -900,7 +906,7 @@ class _AdminDailyCardTabState extends State<AdminDailyCardTab> {
                                 weather: _weatherCtrl.text.trim(),
                               ),
                             );
-                            setState(() => _isSaving = false);
+                            ref.read(adminDashboardProvider.notifier).setIsSaving(false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text("দৈনিক কার্ড তথ্য সফলভাবে ফায়ারস্টোরে আপডেট করা হয়েছে!"), backgroundColor: Colors.green),
@@ -1190,6 +1196,449 @@ class AdminSuppliersTab extends StatelessWidget {
             child: const Text("সংরক্ষণ করুন"),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// --- 0. ADMIN ARTICLES TAB (POST & MANAGE ARTICLES BY CATEGORY) ---
+class AdminArticlesTab extends ConsumerStatefulWidget {
+  const AdminArticlesTab({super.key});
+
+  @override
+  ConsumerState<AdminArticlesTab> createState() => _AdminArticlesTabState();
+}
+
+class _AdminArticlesTabState extends ConsumerState<AdminArticlesTab> {
+  String _selectedCategory = 'all';
+
+  @override
+  Widget build(BuildContext context) {
+    final service = PoultryService();
+
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.teal,
+        icon: const Icon(Icons.post_add_rounded, color: Colors.white),
+        label: const Text("নতুন আর্টিকেলে প্রকাশ করুন", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        onPressed: () => _showAddArticleDialog(context, service),
+      ),
+      body: Column(
+        children: [
+          // Category Filter Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: Colors.teal.shade50.withOpacity(0.5),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const Text("ক্যাটাগরি ফিল্টার: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal)),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text("সবকটি নিবন্ধ"),
+                    selected: _selectedCategory == 'all',
+                    onSelected: (val) => setState(() => _selectedCategory = 'all'),
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text("প্যারেন্টস স্টক (Parents Stock)"),
+                    selected: _selectedCategory == 'parents_stock',
+                    selectedColor: Colors.indigo,
+                    labelStyle: TextStyle(color: _selectedCategory == 'parents_stock' ? Colors.white : Colors.black87),
+                    onSelected: (val) => setState(() => _selectedCategory = 'parents_stock'),
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text("হ্যাচারি (Hatchery)"),
+                    selected: _selectedCategory == 'hatchery',
+                    selectedColor: Colors.orange.shade800,
+                    labelStyle: TextStyle(color: _selectedCategory == 'hatchery' ? Colors.white : Colors.black87),
+                    onSelected: (val) => setState(() => _selectedCategory = 'hatchery'),
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text("সাধারণ নিবন্ধ (General)"),
+                    selected: _selectedCategory == 'general',
+                    selectedColor: Colors.teal,
+                    labelStyle: TextStyle(color: _selectedCategory == 'general' ? Colors.white : Colors.black87),
+                    onSelected: (val) => setState(() => _selectedCategory = 'general'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Articles Stream List
+          Expanded(
+            child: StreamBuilder<List<Article>>(
+              stream: service.getArticlesStream(category: _selectedCategory),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final articles = snapshot.data ?? [];
+                if (articles.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.article_outlined, size: 64, color: Colors.grey.shade400),
+                          const SizedBox(height: 12),
+                          Text(
+                            "এই ক্যাটাগরিতে কোনো নিবন্ধ পাওয়া যায়নি।\n'নতুন আর্টিকেলে প্রকাশ করুন' বাটনে চাপুন।",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: articles.length,
+                  itemBuilder: (context, index) {
+                    final art = articles[index];
+                    final String catLabel = art.category == 'parents_stock'
+                        ? 'প্যারেন্টস স্টক'
+                        : (art.category == 'hatchery' ? 'হ্যাচারি' : 'সাধারণ');
+                    final Color catColor = art.category == 'parents_stock'
+                        ? Colors.indigo
+                        : (art.category == 'hatchery' ? Colors.orange.shade800 : Colors.teal);
+
+                    return Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: art.imageUrl.isNotEmpty
+                              ? Image.network(art.imageUrl, width: 70, height: 70, fit: BoxFit.cover)
+                              : Container(
+                                  width: 70,
+                                  height: 70,
+                                  color: catColor.withOpacity(0.2),
+                                  child: Icon(Icons.article, color: catColor),
+                                ),
+                        ),
+                        title: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: catColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                catLabel,
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                art.titleBn.isNotEmpty ? art.titleBn : art.titleEn,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text("Author: ${art.author} • ${art.readTime}", style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+                            const SizedBox(height: 2),
+                            Text(
+                              art.contentBn.isNotEmpty ? art.contentBn : art.contentEn,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                          tooltip: "আর্টিকেল ডিলিট করুন",
+                          onPressed: () => _confirmDeleteArticle(context, service, art.id),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteArticle(BuildContext context, PoultryService service, String id) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("নিবন্ধ মুছে ফেলার নিশ্চিতকরণ"),
+        content: const Text("আপনি কি নিশ্চিত যে এই নিবন্ধটি ফায়ারস্টোর থেকে মুছে ফেলতে চান?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("বাতিল")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              await service.deleteArticle(id);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text("ডিলিট করুন", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddArticleDialog(BuildContext context, PoultryService service) {
+    final titleBnCtrl = TextEditingController();
+    final titleEnCtrl = TextEditingController();
+    final authorCtrl = TextEditingController(text: 'MurgiCare Specialists');
+    final readTimeCtrl = TextEditingController(text: '5 min read');
+    final imageCtrl = TextEditingController();
+    final contentBnCtrl = TextEditingController();
+    final contentEnCtrl = TextEditingController();
+    String category = 'parents_stock';
+
+    File? selectedImageFile;
+    bool isUploading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text("নতুন আর্টিকেলে প্রকাশ করুন"),
+            content: SizedBox(
+              width: 340,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("ক্যাটাগরি বাছুন (Target Category):", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: category,
+                      decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                      items: const [
+                        DropdownMenuItem(value: 'parents_stock', child: Text("প্যারেন্টস স্টক (Parents Stock)")),
+                        DropdownMenuItem(value: 'hatchery', child: Text("হ্যাচারি (Hatchery)")),
+                        DropdownMenuItem(value: 'general', child: Text("সাধারণ নিবন্ধ (General)")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => category = val);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // --- IMAGE UPLOAD SECTION ---
+                    const Text("আর্টিকেলের ছবি (Article Image):", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal)),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.teal.shade200, width: 1.5),
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        children: [
+                          if (selectedImageFile != null) ...[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                selectedImageFile!,
+                                height: 130,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ] else if (imageCtrl.text.isNotEmpty) ...[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageCtrl.text,
+                                height: 130,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.teal,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  icon: const Icon(Icons.photo_library_rounded, size: 18),
+                                  label: Text(selectedImageFile != null ? "ছবি পরিবর্তন করুন" : "ছবি আপলোড / সিলেক্ট করুন"),
+                                  onPressed: () async {
+                                    final picker = ImagePicker();
+                                    final XFile? picked = await picker.pickImage(
+                                      source: ImageSource.gallery,
+                                      imageQuality: 85,
+                                    );
+                                    if (picked != null) {
+                                      setDialogState(() {
+                                        selectedImageFile = File(picked.path);
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              if (selectedImageFile != null) ...[
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                  onPressed: () {
+                                    setDialogState(() {
+                                      selectedImageFile = null;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: imageCtrl,
+                      onChanged: (_) => setDialogState(() {}),
+                      decoration: const InputDecoration(
+                        labelText: "বা ছবির URL দিন (Optional URL)",
+                        border: OutlineInputBorder(),
+                        hintText: "https://...",
+                        isDense: true,
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: titleBnCtrl,
+                      decoration: const InputDecoration(labelText: "বাংলা শিরোনাম (Bangla Title)", border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: titleEnCtrl,
+                      decoration: const InputDecoration(labelText: "ইংরেজি শিরোনাম (English Title)", border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: authorCtrl,
+                            decoration: const InputDecoration(labelText: "লেখক (Author)", border: OutlineInputBorder()),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: readTimeCtrl,
+                            decoration: const InputDecoration(labelText: "পড়ার সময় (Read time)", border: OutlineInputBorder()),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: contentBnCtrl,
+                      maxLines: 4,
+                      decoration: const InputDecoration(labelText: "বাংলা বিবরণ / বিষয়বস্তু (Bangla Content)", border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: contentEnCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(labelText: "ইংরেজি বিবরণ / বিষয়বস্তু (English Content)", border: OutlineInputBorder()),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("বাতিল")),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                onPressed: isUploading
+                    ? null
+                    : () async {
+                        if (titleBnCtrl.text.isNotEmpty || titleEnCtrl.text.isNotEmpty) {
+                          setDialogState(() => isUploading = true);
+
+                          String finalImageUrl = imageCtrl.text.trim();
+                          if (selectedImageFile != null) {
+                            final uploadedUrl = await service.uploadArticleImage(selectedImageFile!);
+                            if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+                              finalImageUrl = uploadedUrl;
+                            }
+                          }
+
+                          if (finalImageUrl.isEmpty) {
+                            finalImageUrl = "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=80&w=1000";
+                          }
+
+                          final ok = await service.addArticle(
+                            Article(
+                              id: '',
+                              category: category,
+                              titleBn: titleBnCtrl.text.trim(),
+                              titleEn: titleEnCtrl.text.trim().isEmpty ? titleBnCtrl.text.trim() : titleEnCtrl.text.trim(),
+                              author: authorCtrl.text.trim(),
+                              readTime: readTimeCtrl.text.trim(),
+                              imageUrl: finalImageUrl,
+                              contentBn: contentBnCtrl.text.trim(),
+                              contentEn: contentEnCtrl.text.trim().isEmpty ? contentBnCtrl.text.trim() : contentEnCtrl.text.trim(),
+                            ),
+                          );
+
+                          if (ctx.mounted) {
+                            setDialogState(() => isUploading = false);
+                            if (ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("আর্টিকেল এবং ছবি সফলভাবে ফায়ারস্টোরে প্রকাশ করা হয়েছে!"), backgroundColor: Colors.green),
+                              );
+                              Navigator.pop(ctx);
+                            }
+                          }
+                        }
+                      },
+                child: isUploading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text("পোস্ট করুন", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
