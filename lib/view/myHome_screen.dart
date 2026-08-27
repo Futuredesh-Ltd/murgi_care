@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controller/controller.dart';
+import '../controller/riverpod_providers.dart';
 import '../core/app_strings.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/detection_tab.dart';
@@ -14,22 +15,23 @@ import 'screens/admin_dashboard_screen.dart';
 import 'auth_screen.dart';
 import 'widgets/custom_widgets.dart';
 import 'widgets/scale_animation_page.dart';
+import 'widgets/app_drawer.dart';
 
-class MyhomeScreen extends StatefulWidget {
+class MyhomeScreen extends ConsumerStatefulWidget {
   const MyhomeScreen({super.key});
 
   @override
-  State<MyhomeScreen> createState() => _MyhomeScreenState();
+  ConsumerState<MyhomeScreen> createState() => _MyhomeScreenState();
 }
 
-class _MyhomeScreenState extends State<MyhomeScreen> {
-  int _currentIndex = 0;
+class _MyhomeScreenState extends ConsumerState<MyhomeScreen> {
   late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _currentIndex);
+    final initialIndex = ref.read(navigationProvider).currentIndex;
+    _pageController = PageController(initialPage: initialIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       CustomWidgets.handleAppUpdate(context);
     });
@@ -41,14 +43,15 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
     super.dispose();
   }
 
-  void _onTabSelected(int index) {
-    if (_currentIndex == index) return;
-    setState(() => _currentIndex = index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOutCubic,
-    );
+  void _onTabSelected(int index, {int? homeSubTabIndex}) {
+    ref.read(navigationProvider.notifier).selectTab(index, homeSubTabIndex: homeSubTabIndex);
+    if (_pageController.hasClients && _pageController.page?.round() != index) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
+      );
+    }
   }
 
   Future<void> _showLoginDialog(BuildContext context, bool isEnglish) async {
@@ -82,64 +85,83 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DiseaseProvider>(
-      builder: (context, provider, child) {
-        final List<Widget> tabs = [
-          ScaleAnimationPage(
-            key: const ValueKey(0),
-            child: HomeTab(
-              isEnglish: provider.isEnglish,
-              onOpenDetection: () => _onTabSelected(1),
-            ),
-          ),
-          ScaleAnimationPage(
-            key: const ValueKey(1),
-            child: DetectionTab(showLoginDialog: _showLoginDialog),
-          ),
-          ScaleAnimationPage(
-            key: const ValueKey(2),
-            child: SearchTab(isEnglish: provider.isEnglish),
-          ),
-          ScaleAnimationPage(
-            key: const ValueKey(3),
-            child: DoctorsTab(isEnglish: provider.isEnglish),
-          ),
-          ScaleAnimationPage(
-            key: const ValueKey(4),
-            child: DataBankTab(isEnglish: provider.isEnglish),
-          ),
-          ScaleAnimationPage(
-            key: const ValueKey(5),
-            child: ProfileTab(isEnglish: provider.isEnglish),
-          ),
-        ];
+    final navState = ref.watch(navigationProvider);
+    final diseaseProv = ref.watch(diseaseRiverpodProvider);
 
-        return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          extendBody: true,
-          appBar: _buildAppBar(context, provider),
-          body: PageView(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            children: tabs,
-          ),
-          bottomNavigationBar: _buildBottomNav(context, provider.isEnglish),
-        );
-      },
+    final List<Widget> tabs = [
+      ScaleAnimationPage(
+        key: const ValueKey(0),
+        child: HomeTab(
+          isEnglish: diseaseProv.isEnglish,
+          onOpenDetection: () => _onTabSelected(1),
+          subTabIndex: navState.homeSubTabIndex,
+          onSubTabChanged: (subIndex) {
+            ref.read(navigationProvider.notifier).setHomeSubTab(subIndex);
+          },
+        ),
+      ),
+      ScaleAnimationPage(
+        key: const ValueKey(1),
+        child: DetectionTab(showLoginDialog: _showLoginDialog),
+      ),
+      ScaleAnimationPage(
+        key: const ValueKey(2),
+        child: SearchTab(isEnglish: diseaseProv.isEnglish),
+      ),
+      ScaleAnimationPage(
+        key: const ValueKey(3),
+        child: DoctorsTab(isEnglish: diseaseProv.isEnglish),
+      ),
+      ScaleAnimationPage(
+        key: const ValueKey(4),
+        child: DataBankTab(isEnglish: diseaseProv.isEnglish),
+      ),
+      ScaleAnimationPage(
+        key: const ValueKey(5),
+        child: ProfileTab(isEnglish: diseaseProv.isEnglish),
+      ),
+    ];
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBody: true,
+      drawer: AppDrawer(
+        isEnglish: diseaseProv.isEnglish,
+        onSelectTab: (mainIndex, {int? homeSubTabIndex}) {
+          _onTabSelected(mainIndex, homeSubTabIndex: homeSubTabIndex);
+        },
+        onToggleLanguage: () => diseaseProv.toggleLanguage(),
+      ),
+      appBar: _buildAppBar(context, diseaseProv, navState.currentIndex),
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: tabs,
+      ),
+      bottomNavigationBar: _buildBottomNav(context, diseaseProv.isEnglish, navState.currentIndex),
     );
   }
 
-  AppBar _buildAppBar(BuildContext context, DiseaseProvider provider) {
+  AppBar _buildAppBar(BuildContext context, DiseaseProvider provider, int currentIndex) {
     final user = FirebaseAuth.instance.currentUser;
 
     return AppBar(
-      leading: (_currentIndex == 1 && provider.image != null)
-          ? IconButton(
+      leading: Builder(
+        builder: (context) {
+          if (currentIndex == 1 && provider.image != null) {
+            return IconButton(
               icon: const Icon(Icons.refresh_rounded, color: Colors.redAccent),
               onPressed: () => provider.reset(),
               tooltip: provider.isEnglish ? "Reset" : "রিসেট",
-            )
-          : const SizedBox.shrink(),
+            );
+          }
+          return IconButton(
+            icon: const Icon(Icons.menu_rounded, color: Colors.teal),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            tooltip: provider.isEnglish ? "Menu" : "মেনু",
+          );
+        },
+      ),
       title: Text(
         'MurgiCare',
         style: TextStyle(
@@ -215,7 +237,7 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
     );
   }
 
-  Widget _buildBottomNav(BuildContext context, bool isEnglish) {
+  Widget _buildBottomNav(BuildContext context, bool isEnglish, int currentIndex) {
     final List<Map<String, dynamic>> navItems = [
       {
         'icon': Icons.home_outlined,
@@ -281,7 +303,7 @@ class _MyhomeScreenState extends State<MyhomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: List.generate(navItems.length, (index) {
               final item = navItems[index];
-              final isSelected = _currentIndex == index;
+              final isSelected = currentIndex == index;
               final isSpecial = item['isSpecial'] == true;
 
               return Expanded(
