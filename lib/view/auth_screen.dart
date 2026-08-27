@@ -1,10 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:murgi_care/controller/auth_controller.dart';
-import 'package:provider/provider.dart';
-import '../controller/controller.dart';
+import 'package:provider/provider.dart' as p;
+import '../controller/riverpod_providers.dart';
 
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends ConsumerWidget {
   AuthScreen({super.key});
 
   final _formKey = GlobalKey<FormState>();
@@ -15,12 +16,12 @@ class AuthScreen extends StatelessWidget {
   final _addressController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    final isEnglish = context.watch<DiseaseProvider>().isEnglish;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isEnglish = ref.watch(diseaseRiverpodProvider).isEnglish;
 
-    return ChangeNotifierProvider(
+    return p.ChangeNotifierProvider(
       create: (_) => AuthProvider(),
-      child: Consumer<AuthProvider>(
+      child: p.Consumer<AuthProvider>(
         builder: (context, auth, child) {
           return Scaffold(
             backgroundColor: Colors.white,
