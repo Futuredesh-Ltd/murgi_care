@@ -1,59 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth_screen.dart';
 import '../profile_screen.dart';
-import 'package:provider/provider.dart';
 import '../screens/admin_dashboard_screen.dart';
-import '../../controller/controller.dart';
+import '../../controller/riverpod_providers.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends ConsumerWidget {
   final bool isEnglish;
 
   const ProfileTab({super.key, required this.isEnglish});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<DiseaseProvider>(
-      builder: (context, provider, child) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
-              Icon(Icons.person_pin, size: 80, color: Colors.teal.shade200),
-              const SizedBox(height: 16),
-              Text(
-                provider.isEnglish ? "Account Settings" : "অ্যাকাউন্ট সেটিংস",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 32),
-              
-              // Dark Mode Toggle
-              Material(
-                color: Theme.of(context).cardColor,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(diseaseRiverpodProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 20),
+          Icon(Icons.person_pin, size: 80, color: Colors.teal.shade200),
+          const SizedBox(height: 16),
+          Text(
+            provider.isEnglish ? "Account Settings" : "অ্যাকাউন্ট সেটিংস",
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 32),
+          
+          // Dark Mode Toggle
+          Material(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                clipBehavior: Clip.antiAlias,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.teal.withOpacity(0.2)),
-                  ),
-                  child: SwitchListTile(
-                    title: Text(
-                      provider.isEnglish ? "Dark Mode" : "ডার্ক মোড",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    secondary: const Icon(Icons.dark_mode_rounded, color: Colors.teal),
-                    value: provider.themeMode == ThemeMode.dark,
-                    onChanged: (value) => provider.toggleTheme(),
-                    activeColor: Colors.teal,
-                  ),
-                ),
+                border: Border.all(color: Colors.teal.withOpacity(0.2)),
               ),
-              const SizedBox(height: 16),
+              child: SwitchListTile(
+                title: Text(
+                  provider.isEnglish ? "Dark Mode" : "ডার্ক মোড",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                secondary: const Icon(Icons.dark_mode_rounded, color: Colors.teal),
+                value: provider.themeMode == ThemeMode.dark,
+                onChanged: (value) => ref.read(diseaseRiverpodProvider.notifier).toggleTheme(),
+                activeColor: Colors.teal,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
               // Admin Panel Navigation Tile (Strictly for Admin users only)
               Builder(
@@ -122,8 +122,6 @@ class ProfileTab extends StatelessWidget {
             ],
           ),
         );
-      },
-    );
   }
 
   Widget _buildAuthSection(BuildContext context, bool isEnglish) {
