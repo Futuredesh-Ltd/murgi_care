@@ -18,6 +18,7 @@ import '../screens/production_cost_screen.dart';
 import '../screens/farm_management_screen.dart';
 import '../screens/vaccine_info_screen.dart';
 import '../screens/poultry_diseases_screen.dart';
+import '../screens/disease_diagnosis_screen.dart';
 
 class HomeTab extends ConsumerStatefulWidget {
   final bool isEnglish;
@@ -1095,6 +1096,12 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "icon": Icons.vaccines_rounded,
         "color": Colors.blue,
         "onTap": () => Navigator.push(context, MaterialPageRoute(builder: (_) => VaccineInfoScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Disease Diagnosis" : "রোগ নির্ণয় কৌশল",
+        "icon": Icons.medical_services_rounded,
+        "color": const Color(0xFF00838F),
+        "onTap": () => Navigator.push(context, MaterialPageRoute(builder: (_) => DiseaseDiagnosisScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Disease Detection" : "রোগ নির্ণয়",
