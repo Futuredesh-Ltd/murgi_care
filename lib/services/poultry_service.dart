@@ -475,69 +475,71 @@ class PoultryService {
     }
   }
 
-  Stream<List<DoctorContactRequest>> getDoctorContactRequestsStream() {
-    return _db
-        .collection('requests')
-        .snapshots()
-        .map((snapshot) {
-      final firestoreList = snapshot.docs
-          .map((doc) => DoctorContactRequest.fromFirestore(doc))
-          .toList();
-      final Map<String, DoctorContactRequest> map = {};
-      for (final r in _localDoctorRequests) {
-        map[r.id] = r;
-      }
-      for (final r in firestoreList) {
-        map[r.id] = r;
-      }
-      final list = map.values.toList();
-      list.sort((a, b) {
-        final dtA = a.requestedAt ?? DateTime.now();
-        final dtB = b.requestedAt ?? DateTime.now();
-        return dtB.compareTo(dtA);
-      });
-      return list;
-    }).handleError((e) {
-      debugPrint("getDoctorContactRequestsStream firestore error (using local fallback): $e");
-      final list = List<DoctorContactRequest>.from(_localDoctorRequests);
-      list.sort((a, b) {
-        final dtA = a.requestedAt ?? DateTime.now();
-        final dtB = b.requestedAt ?? DateTime.now();
-        return dtB.compareTo(dtA);
-      });
-      return list;
+  Stream<List<DoctorContactRequest>> getDoctorContactRequestsStream() async* {
+    final localList = List<DoctorContactRequest>.from(_localDoctorRequests);
+    localList.sort((a, b) {
+      final dtA = a.requestedAt ?? DateTime.now();
+      final dtB = b.requestedAt ?? DateTime.now();
+      return dtB.compareTo(dtA);
     });
+    yield localList;
+
+    try {
+      await for (final snapshot in _db.collection('requests').snapshots()) {
+        final firestoreList = snapshot.docs
+            .map((doc) => DoctorContactRequest.fromFirestore(doc))
+            .toList();
+        final Map<String, DoctorContactRequest> map = {};
+        for (final r in _localDoctorRequests) {
+          map[r.id] = r;
+        }
+        for (final r in firestoreList) {
+          map[r.id] = r;
+        }
+        final list = map.values.toList();
+        list.sort((a, b) {
+          final dtA = a.requestedAt ?? DateTime.now();
+          final dtB = b.requestedAt ?? DateTime.now();
+          return dtB.compareTo(dtA);
+        });
+        yield list;
+      }
+    } catch (e) {
+      debugPrint("getDoctorContactRequestsStream firestore error (local state active): $e");
+      yield localList;
+    }
   }
 
-  Stream<List<DoctorContactRequest>> getUserDoctorRequestsStream(String userId) {
+  Stream<List<DoctorContactRequest>> getUserDoctorRequestsStream(String userId) async* {
     final List<DoctorContactRequest> userLocal = _localDoctorRequests
         .where((r) => userId.isEmpty || r.userId == userId)
         .toList();
 
-    if (userId.isEmpty) {
-      return Stream.value(userLocal);
-    }
+    yield userLocal;
 
-    return _db
-        .collection('requests')
-        .where('userId', isEqualTo: userId)
-        .snapshots()
-        .map((snapshot) {
-      final firestoreList = snapshot.docs
-          .map((doc) => DoctorContactRequest.fromFirestore(doc))
-          .toList();
-      final Map<String, DoctorContactRequest> map = {};
-      for (final r in userLocal) {
-        map[r.doctorId] = r;
+    if (userId.isEmpty) return;
+
+    try {
+      await for (final snapshot in _db
+          .collection('requests')
+          .where('userId', isEqualTo: userId)
+          .snapshots()) {
+        final firestoreList = snapshot.docs
+            .map((doc) => DoctorContactRequest.fromFirestore(doc))
+            .toList();
+        final Map<String, DoctorContactRequest> map = {};
+        for (final r in userLocal) {
+          map[r.doctorId] = r;
+        }
+        for (final r in firestoreList) {
+          map[r.doctorId] = r;
+        }
+        yield map.values.toList();
       }
-      for (final r in firestoreList) {
-        map[r.doctorId] = r;
-      }
-      return map.values.toList();
-    }).handleError((e) {
-      debugPrint("getUserDoctorRequestsStream firestore error (using local fallback): $e");
-      return userLocal;
-    });
+    } catch (e) {
+      debugPrint("getUserDoctorRequestsStream firestore error (local state active): $e");
+      yield userLocal;
+    }
   }
 
   Future<bool> updateDoctorRequestStatus(String requestId, String status, {String? permission}) async {
