@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -218,11 +220,7 @@ class SearchTab extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              CircleAvatar(
-                                backgroundColor: Colors.teal.shade50,
-                                child: const Icon(Icons.store_rounded,
-                                    color: Colors.teal),
-                              ),
+                              _buildSupplierAvatarWidget(sup.name, sup.image, radius: 28),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -238,7 +236,9 @@ class SearchTab extends ConsumerWidget {
                                       "${sup.address}, ${sup.district}",
                                       style: TextStyle(
                                           fontSize: 12,
-                                          color: Colors.grey[700]),
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.grey[300]
+                                              : Colors.grey[700]),
                                     ),
                                   ],
                                 ),
@@ -256,6 +256,20 @@ class SearchTab extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
+                              if (sup.whatsapp.isNotEmpty) ...[
+                                ElevatedButton.icon(
+                                  onPressed: () => _launchWhatsApp(sup.whatsapp),
+                                  icon: const Icon(Icons.chat, size: 16),
+                                  label: const Text("WhatsApp"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                               ElevatedButton.icon(
                                 onPressed: () => _makePhoneCall(sup.phone),
                                 icon: const Icon(Icons.call, size: 16),
@@ -287,5 +301,92 @@ class SearchTab extends ConsumerWidget {
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     }
+  }
+
+  void _launchWhatsApp(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri url = Uri.parse("https://wa.me/$cleanPhone");
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Widget _buildSupplierAvatarWidget(String name, String imgPath, {double radius = 28}) {
+    final double size = radius * 2;
+    String firstLetter = 'S';
+    final trimmed = name.trim();
+    if (trimmed.isNotEmpty) {
+      firstLetter = trimmed.substring(0, 1).toUpperCase();
+    }
+
+    final colors = [
+      Colors.teal,
+      Colors.indigo,
+      Colors.deepOrange,
+      Colors.purple,
+      Colors.blue,
+      Colors.green,
+      Colors.amber.shade900,
+      Colors.pink.shade700,
+    ];
+    final avatarColor = colors[name.hashCode.abs() % colors.length];
+
+    Widget nameLetterAvatar = CircleAvatar(
+      radius: radius,
+      backgroundColor: avatarColor.withOpacity(0.15),
+      child: Text(
+        firstLetter,
+        style: TextStyle(
+          fontSize: radius * 0.9,
+          fontWeight: FontWeight.bold,
+          color: avatarColor,
+        ),
+      ),
+    );
+
+    if (imgPath.isNotEmpty) {
+      if (imgPath.startsWith('http')) {
+        return ClipOval(
+          child: Image.network(
+            imgPath,
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => nameLetterAvatar,
+          ),
+        );
+      }
+      if (imgPath.startsWith('data:image')) {
+        try {
+          final base64Str = imgPath.split(',').last;
+          final bytes = base64Decode(base64Str);
+          return ClipOval(
+            child: Image.memory(
+              bytes,
+              height: size,
+              width: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => nameLetterAvatar,
+            ),
+          );
+        } catch (_) {}
+      }
+      try {
+        final file = File(imgPath);
+        if (file.existsSync()) {
+          return ClipOval(
+            child: Image.file(
+              file,
+              height: size,
+              width: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => nameLetterAvatar,
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+
+    return nameLetterAvatar;
   }
 }
