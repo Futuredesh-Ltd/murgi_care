@@ -50,7 +50,26 @@ class DiseaseProvider extends ChangeNotifier {
   bool get isMultiMode => _images.isNotEmpty;
 
   DiseaseProvider() {
+    _loadPreferences();
     _loadModel();
+  }
+
+  Future<void> _loadPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedTheme = prefs.getString('app_theme_mode');
+      if (savedTheme == 'dark') {
+        _themeMode = ThemeMode.dark;
+      } else if (savedTheme == 'light') {
+        _themeMode = ThemeMode.light;
+      } else if (savedTheme == 'system') {
+        _themeMode = ThemeMode.system;
+      }
+      _isEnglish = prefs.getBool('app_is_english') ?? false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error loading SharedPreferences: $e");
+    }
   }
 
   Future<void> _loadModel() async {
@@ -63,15 +82,28 @@ class DiseaseProvider extends ChangeNotifier {
     }
   }
 
-  void toggleLanguage() {
+  void toggleLanguage() async {
     _isEnglish = !_isEnglish;
     notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('app_is_english', _isEnglish);
+    } catch (e) {
+      debugPrint("Error saving language preference: $e");
+    }
   }
 
-  void toggleTheme() {
+  void toggleTheme() async {
     _themeMode =
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+        _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          'app_theme_mode', _themeMode == ThemeMode.dark ? 'dark' : 'light');
+    } catch (e) {
+      debugPrint("Error saving theme preference: $e");
+    }
   }
 
   void reset() {
