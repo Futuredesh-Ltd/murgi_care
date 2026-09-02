@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:murgi_care/view/Onboarding_Screen.dart';
 import 'package:murgi_care/view/myHome_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,8 +19,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigateToNext() async {
-    // Shorter initial delay for aesthetics
-    await Future.delayed(const Duration(milliseconds: 800));
+    // Initial delay to show smooth lottie loading animation
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     final prefs = await SharedPreferences.getInstance();
     final bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
@@ -45,13 +46,12 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Column(
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset("assets/logo.png", height: 140, width: 140),
-            SizedBox(height: 10),
-
+            const SizedBox(height: 10),
             RichText(
-              text: TextSpan(
+              text: const TextSpan(
                 children: [
                   TextSpan(
                     text: "MURGI ",
@@ -61,7 +61,6 @@ class _SplashScreenState extends State<SplashScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   TextSpan(
                     text: "CARE",
                     style: TextStyle(
@@ -73,8 +72,16 @@ class _SplashScreenState extends State<SplashScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
-            const CircularProgressIndicator(color: Colors.teal),
+            const SizedBox(height: 24),
+            Lottie.asset(
+              "assets/loading.json",
+              height: 180,
+              width: 180,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const CircularProgressIndicator(color: Colors.teal);
+              },
+            ),
           ],
         ),
       ),
