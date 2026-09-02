@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +9,7 @@ import '../../services/poultry_service.dart';
 import '../../model/banner_model.dart';
 import '../../model/announcement_model.dart';
 import '../../model/doctor_model.dart';
+import '../../model/doctor_request_model.dart';
 import '../../model/supplier_model.dart';
 import '../../model/market_price_model.dart';
 import '../../model/daily_card_model.dart';
@@ -752,7 +754,11 @@ class _AdminDailyCardTabState extends ConsumerState<AdminDailyCardTab> {
       _timeCtrl.text = info.timeText;
       _tipCtrl.text = info.dailyTip;
       _weatherCtrl.text = info.weather;
-      ref.read(adminDashboardProvider.notifier).setIsLoaded(true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(adminDashboardProvider.notifier).setIsLoaded(true);
+        }
+      });
     }
   }
 
@@ -1004,36 +1010,173 @@ class AdminAnnouncementsTab extends StatelessWidget {
 }
 
 // --- 5. ADMIN DOCTORS ---
-class AdminDoctorsTab extends StatelessWidget {
+class AdminDoctorsTab extends StatefulWidget {
   const AdminDoctorsTab({super.key});
+
+  @override
+  State<AdminDoctorsTab> createState() => _AdminDoctorsTabState();
+}
+
+class _AdminDoctorsTabState extends State<AdminDoctorsTab> {
+  String _selectedStatusFilter = 'all';
 
   @override
   Widget build(BuildContext context) {
     final service = PoultryService();
 
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            color: Colors.teal.shade700,
+            child: const TabBar(
+              indicatorColor: Colors.amberAccent,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              tabs: [
+                Tab(
+                  icon: Icon(Icons.people_alt_rounded, size: 18),
+                  text: "ডাক্তার তালিকা",
+                ),
+                Tab(
+                  icon: Icon(Icons.mark_email_unread_rounded, size: 18),
+                  text: "নম্বর রিকোয়েস্ট",
+                ),
+              ],
+            ),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // Sub-tab 1: Doctors List & Add/Edit
+            _buildDoctorsListSubTab(context, service),
+            // Sub-tab 2: Contact Access Requests
+            _buildRequestsSubTab(context, service),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- SUB TAB 1: DOCTORS LIST ---
+  Widget _buildDoctorsListSubTab(BuildContext context, PoultryService service) {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.teal,
-        onPressed: () => _showAddDoctorDialog(context, service),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("নতুন ডাক্তার যোগ করুন", style: TextStyle(color: Colors.white)),
+        onPressed: () => _showAddOrEditDoctorDialog(context, service),
+        icon: const Icon(Icons.add_a_photo_rounded, color: Colors.white),
+        label: const Text("নতুন ডাক্তার যোগ করুন",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<List<Doctor>>(
         stream: service.getDoctorsStream(),
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           final docs = snapshot.data ?? [];
+          if (docs.isEmpty) {
+            return Center(
+              child: Text(
+                "কোনো ডাক্তার তথ্য ডাটাবেজে পাওয়া যায়নি।\nনিচের বাটনে ক্লিক করে নতুন ডাক্তার যোগ করুন।",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            );
+          }
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final d = docs[index];
               return Card(
-                child: ListTile(
-                  title: Text(d.name),
-                  subtitle: Text("${d.qualification} - ${d.district}"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => service.deleteDoctor(d.id),
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDoctorAvatarWidget(d.profileImage, null, radius: 30),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  d.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.teal),
+                                ),
+                                Text(
+                                  d.qualification,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  d.specialization,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey[700]),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit_rounded,
+                                color: Colors.teal),
+                            onPressed: () =>
+                                _showAddOrEditDoctorDialog(context, service, existing: d),
+                            tooltip: "সম্পাদনা করুন",
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_forever_rounded,
+                                color: Colors.redAccent),
+                            onPressed: () => _confirmDeleteDoctor(context, service, d),
+                            tooltip: "ডিলিট করুন",
+                          ),
+                        ],
+                      ),
+                      if (d.description.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            "বিবরণ: ${d.description}",
+                            style: const TextStyle(fontSize: 12, color: Colors.black87),
+                          ),
+                        ),
+                      ],
+                      const Divider(height: 20),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 6,
+                        children: [
+                          _chipInfo(Icons.call, "ফোন: ${d.phone}", Colors.teal),
+                          _chipInfo(
+                              Icons.chat,
+                              "WhatsApp: ${d.whatsapp.isNotEmpty ? d.whatsapp : d.phone}",
+                              Colors.green),
+                          _chipInfo(Icons.location_on, "জেলা: ${d.district}", Colors.blueGrey),
+                          if (d.experience.isNotEmpty)
+                            _chipInfo(Icons.workspace_premium, "অভিজ্ঞতা: ${d.experience}", Colors.orange),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -1044,52 +1187,627 @@ class AdminDoctorsTab extends StatelessWidget {
     );
   }
 
-  void _showAddDoctorDialog(BuildContext context, PoultryService service) {
-    final nameCtrl = TextEditingController();
-    final qualCtrl = TextEditingController();
-    final specCtrl = TextEditingController();
-    final expCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final distCtrl = TextEditingController();
+  Widget _chipInfo(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- SUB TAB 2: ACCESS REQUESTS ---
+  Widget _buildRequestsSubTab(BuildContext context, PoultryService service) {
+    return Column(
+      children: [
+        // Status filter bar
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          color: Colors.teal.shade50,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                const Text("ফিল্টার: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text("সব"),
+                  selected: _selectedStatusFilter == 'all',
+                  onSelected: (val) => setState(() => _selectedStatusFilter = 'all'),
+                ),
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  label: const Text("পেন্ডিং"),
+                  selected: _selectedStatusFilter == 'pending',
+                  selectedColor: Colors.amber.shade200,
+                  onSelected: (val) => setState(() => _selectedStatusFilter = 'pending'),
+                ),
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  label: const Text("অনুমোদিত"),
+                  selected: _selectedStatusFilter == 'accepted',
+                  selectedColor: Colors.green.shade200,
+                  onSelected: (val) => setState(() => _selectedStatusFilter = 'accepted'),
+                ),
+                const SizedBox(width: 6),
+                ChoiceChip(
+                  label: const Text("প্রত্যাখ্যাত"),
+                  selected: _selectedStatusFilter == 'rejected',
+                  selectedColor: Colors.red.shade200,
+                  onSelected: (val) => setState(() => _selectedStatusFilter = 'rejected'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<List<DoctorContactRequest>>(
+            stream: service.getDoctorContactRequestsStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              var reqs = snapshot.data ?? [];
+              if (_selectedStatusFilter != 'all') {
+                reqs = reqs.where((r) => r.status == _selectedStatusFilter).toList();
+              }
+
+              if (reqs.isEmpty) {
+                return Center(
+                  child: Text(
+                    "কোনো নম্বর এক্সেস অনুরোধ পাওয়া যায়নি।",
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: reqs.length,
+                itemBuilder: (context, index) {
+                  final req = reqs[index];
+                  Color statusColor = Colors.amber;
+                  String statusText = "অপেক্ষমাণ (Pending)";
+                  if (req.status == 'accepted') {
+                    statusColor = Colors.green;
+                    statusText = "অনুমোদিত (Accepted)";
+                  } else if (req.status == 'rejected') {
+                    statusColor = Colors.red;
+                    statusText = "প্রত্যাখ্যাত (Rejected)";
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.person_pin_rounded,
+                                        color: Colors.teal),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        req.userName,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: statusColor),
+                                ),
+                                child: Text(
+                                  statusText,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: statusColor,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text("যেই ডাক্তারের নম্বরের অনুরোধ: ${req.doctorName}",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600, color: Colors.teal)),
+                          if (req.userPhone.isNotEmpty)
+                            Text("ইউজারের ফোন: ${req.userPhone}"),
+                          if (req.userEmail.isNotEmpty)
+                            Text("ইউজারের ইমেইল: ${req.userEmail}"),
+                          if (req.requestedAt != null)
+                            Text(
+                              "অনুরোধের তারিখ: ${req.requestedAt.toString().split('.')[0]}",
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline,
+                                    color: Colors.grey),
+                                onPressed: () => service.deleteDoctorRequest(req.id),
+                                tooltip: "রিকোয়েস্ট ডিলিট করুন",
+                              ),
+                              const Spacer(),
+                              if (req.status != 'rejected')
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.redAccent),
+                                  icon: const Icon(Icons.close, size: 16),
+                                  label: const Text("প্রত্যাখ্যান করুন"),
+                                  onPressed: () async {
+                                    await service.updateDoctorRequestStatus(
+                                        req.id, 'rejected', permission: 'no');
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text("অনুরোধ প্রত্যাখ্যাত করা হয়েছে।")),
+                                      );
+                                    }
+                                  },
+                                ),
+                              const SizedBox(width: 8),
+                              if (req.status != 'accepted')
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.teal,
+                                      foregroundColor: Colors.white),
+                                  icon: const Icon(Icons.check, size: 16),
+                                  label: const Text("অনুমোদন করুন (Accept)"),
+                                  onPressed: () async {
+                                    await service.updateDoctorRequestStatus(
+                                        req.id, 'accepted', permission: 'yes');
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text("অনুরোধ সফলভাবে অনুমোদন করা হয়েছে! permission='yes' সেট করা হয়েছে।"),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- ADD / EDIT DOCTOR DIALOG ---
+  void _showAddOrEditDoctorDialog(BuildContext context, PoultryService service,
+      {Doctor? existing}) {
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final imgCtrl = TextEditingController(text: existing?.profileImage ?? '');
+    final descCtrl = TextEditingController(text: existing?.description ?? '');
+    final qualCtrl = TextEditingController(text: existing?.qualification ?? '');
+    final specCtrl = TextEditingController(text: existing?.specialization ?? '');
+    final expCtrl = TextEditingController(text: existing?.experience ?? '');
+    final phoneCtrl = TextEditingController(text: existing?.phone ?? '');
+    final whatsappCtrl = TextEditingController(text: existing?.whatsapp ?? '');
+    final addrCtrl = TextEditingController(text: existing?.address ?? '');
+    final distCtrl = TextEditingController(text: existing?.district ?? '');
+    final upazilaCtrl = TextEditingController(text: existing?.upazila ?? '');
+    final timeCtrl = TextEditingController(text: existing?.availableTime ?? '');
+
+    File? selectedImageFile;
+    bool isUploading = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("ডাক্তার যোগ করুন"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "ডাক্তারের নাম")),
-              TextField(controller: qualCtrl, decoration: const InputDecoration(labelText: "যোগ্যতা (DVM, MS...)")),
-              TextField(controller: specCtrl, decoration: const InputDecoration(labelText: "বিশেষজ্ঞতা")),
-              TextField(controller: expCtrl, decoration: const InputDecoration(labelText: "অভিজ্ঞতা")),
-              TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: "ফোন নম্বর")),
-              TextField(controller: distCtrl, decoration: const InputDecoration(labelText: "জেলা")),
-            ],
-          ),
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> pickImage(ImageSource source) async {
+              try {
+                final picker = ImagePicker();
+                final picked = await picker.pickImage(source: source, imageQuality: 80);
+                if (picked != null) {
+                  setDialogState(() {
+                    selectedImageFile = File(picked.path);
+                  });
+                }
+              } catch (e) {
+                debugPrint("Image pick error: $e");
+              }
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text(existing == null ? "নতুন ডাক্তার যোগ করুন" : "ডাক্তারের তথ্য আপডেট করুন"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // AVATAR PREVIEW WITH CAMERA BADGE
+                    Center(
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          _buildDoctorAvatarWidget(imgCtrl.text.trim(), selectedImageFile, radius: 45),
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.teal,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                                  builder: (bCtx) => Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(Icons.photo_library_rounded, color: Colors.teal),
+                                          title: const Text("গ্যালারি থেকে ছবি বেছে নিন"),
+                                          onTap: () {
+                                            Navigator.pop(bCtx);
+                                            pickImage(ImageSource.gallery);
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.camera_alt_rounded, color: Colors.teal),
+                                          title: const Text("ক্যামেরা দিয়ে ছবি তুলুন"),
+                                          onTap: () {
+                                            Navigator.pop(bCtx);
+                                            pickImage(ImageSource.camera);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                          builder: (bCtx) => Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Wrap(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.photo_library_rounded, color: Colors.teal),
+                                  title: const Text("গ্যালারি থেকে ছবি বেছে নিন"),
+                                  onTap: () {
+                                    Navigator.pop(bCtx);
+                                    pickImage(ImageSource.gallery);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.camera_alt_rounded, color: Colors.teal),
+                                  title: const Text("ক্যামেরা দিয়ে ছবি তুলুন"),
+                                  onTap: () {
+                                    Navigator.pop(bCtx);
+                                    pickImage(ImageSource.camera);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add_a_photo_rounded, size: 18),
+                      label: Text(selectedImageFile != null ? "ছবি পরিবর্তিত হয়েছে (চেঞ্জ করুন)" : "ছবি আপলোড করুন (Upload Image)"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "ডাক্তারের নাম *", prefixIcon: Icon(Icons.person)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: imgCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "অথবা প্রোফাইল ছবি URL (Image Link)",
+                          hintText: "https://...",
+                          prefixIcon: Icon(Icons.image)),
+                      onChanged: (val) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                          labelText: "বিস্তারিত বিবরণ (Description)",
+                          hintText: "ডাক্তার সম্পর্কে বিস্তারিত বিবরণ...",
+                          prefixIcon: Icon(Icons.description)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: qualCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "যোগ্যতা (DVM, MS, PhD...)",
+                          prefixIcon: Icon(Icons.school)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: specCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "বিশেষজ্ঞতা (যেমন: পোল্ট্রি বিশেষজ্ঞ)",
+                          prefixIcon: Icon(Icons.medical_services)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: expCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "অভিজ্ঞতা (যেমন: ১০ বছর)",
+                          prefixIcon: Icon(Icons.work)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: "ফোন নম্বর (Phone Number) *",
+                          prefixIcon: Icon(Icons.phone)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: whatsappCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: "WhatsApp নম্বর",
+                          hintText: "খালি রাখলে ফোন নম্বর ব্যবহৃত হবে",
+                          prefixIcon: Icon(Icons.chat)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: addrCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "চেম্বার ঠিকানা",
+                          prefixIcon: Icon(Icons.location_city)),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: distCtrl,
+                            decoration: const InputDecoration(
+                                labelText: "জেলা", prefixIcon: Icon(Icons.map)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: upazilaCtrl,
+                            decoration: const InputDecoration(
+                                labelText: "উপজেলা", prefixIcon: Icon(Icons.pin_drop)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: timeCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "সাক্ষাতের সময়সূচী (Visiting Hours)",
+                          prefixIcon: Icon(Icons.access_time)),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isUploading ? null : () => Navigator.pop(ctx),
+                  child: const Text("বাতিল"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  onPressed: isUploading
+                      ? null
+                      : () async {
+                          if (nameCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("দয়া করে ডাক্তারের নাম লিখুন।")),
+                            );
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isUploading = true;
+                          });
+
+                          String finalImgUrl = imgCtrl.text.trim();
+                          if (selectedImageFile != null) {
+                            final uploadedUrl = await service.uploadDoctorImage(selectedImageFile!);
+                            if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+                              finalImgUrl = uploadedUrl;
+                            }
+                          }
+
+                          final docObj = Doctor(
+                            id: existing?.id ?? '',
+                            name: nameCtrl.text.trim(),
+                            qualification: qualCtrl.text.trim(),
+                            specialization: specCtrl.text.trim(),
+                            experience: expCtrl.text.trim(),
+                            phone: phoneCtrl.text.trim(),
+                            whatsapp: whatsappCtrl.text.trim().isNotEmpty
+                                ? whatsappCtrl.text.trim()
+                                : phoneCtrl.text.trim(),
+                            address: addrCtrl.text.trim(),
+                            district: distCtrl.text.trim(),
+                            upazila: upazilaCtrl.text.trim(),
+                            profileImage: finalImgUrl,
+                            description: descCtrl.text.trim(),
+                            availableTime: timeCtrl.text.trim(),
+                          );
+
+                          if (existing == null) {
+                            await service.addDoctor(docObj);
+                          } else {
+                            await service.updateDoctor(existing.id, docObj.toMap());
+                          }
+
+                          if (context.mounted) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(existing == null
+                                    ? "নতুন ডাক্তার সফলভাবে যোগ করা হয়েছে!"
+                                    : "ডাক্তারের তথ্য আপডেট করা হয়েছে!"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                  child: isUploading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text("সংরক্ষণ করুন", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDoctorAvatarWidget(String imgPath, File? localFile, {double radius = 35}) {
+    final double size = radius * 2;
+    Widget fallbackIcon = CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.teal.shade100,
+      child: Icon(Icons.person, size: radius * 1.1, color: Colors.teal),
+    );
+
+    if (localFile != null) {
+      return ClipOval(
+        child: Image.file(
+          localFile,
+          height: size,
+          width: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => fallbackIcon,
         ),
+      );
+    }
+    if (imgPath.isEmpty) {
+      return fallbackIcon;
+    }
+    if (imgPath.startsWith('http')) {
+      return ClipOval(
+        child: Image.network(
+          imgPath,
+          height: size,
+          width: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => fallbackIcon,
+        ),
+      );
+    }
+    if (imgPath.startsWith('data:image')) {
+      try {
+        final base64Str = imgPath.split(',').last;
+        final bytes = base64Decode(base64Str);
+        return ClipOval(
+          child: Image.memory(
+            bytes,
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => fallbackIcon,
+          ),
+        );
+      } catch (_) {}
+    }
+    try {
+      final file = File(imgPath);
+      if (file.existsSync()) {
+        return ClipOval(
+          child: Image.file(
+            file,
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => fallbackIcon,
+          ),
+        );
+      }
+    } catch (_) {}
+
+    return fallbackIcon;
+  }
+
+  void _confirmDeleteDoctor(BuildContext context, PoultryService service, Doctor doctor) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("ডাক্তার ডিলিট করতে চান?"),
+        content: Text("${doctor.name} এর প্রোফাইল কি ডাটাবেজ থেকে মুছে ফেলতে চান?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("বাতিল")),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () async {
-              if (nameCtrl.text.isNotEmpty) {
-                await service.addDoctor(
-                  Doctor(
-                    id: '',
-                    name: nameCtrl.text,
-                    qualification: qualCtrl.text,
-                    specialization: specCtrl.text,
-                    experience: expCtrl.text,
-                    phone: phoneCtrl.text,
-                    address: distCtrl.text,
-                    district: distCtrl.text,
-                  ),
-                );
-                if (context.mounted) Navigator.pop(ctx);
-              }
+              await service.deleteDoctor(doctor.id);
+              if (context.mounted) Navigator.pop(ctx);
             },
-            child: const Text("সংরক্ষণ করুন"),
+            child: const Text("ডিলিট করুন", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1108,26 +1826,122 @@ class AdminSuppliersTab extends StatelessWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.teal,
-        onPressed: () => _showAddSupplierDialog(context, service),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("নতুন সাপ্লায়ার যোগ করুন", style: TextStyle(color: Colors.white)),
+        onPressed: () => _showAddOrEditSupplierDialog(context, service),
+        icon: const Icon(Icons.add_a_photo_rounded, color: Colors.white),
+        label: const Text("নতুন সাপ্লায়ার যোগ করুন",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<List<Supplier>>(
         stream: service.getSuppliersStream(),
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           final sups = snapshot.data ?? [];
+          if (sups.isEmpty) {
+            return Center(
+              child: Text(
+                "কোনো সাপ্লায়ার তথ্য ডাটাবেজে পাওয়া যায়নি।\nনতুন সাপ্লায়ার যোগ করতে নিচের বাটনে চাপ দিন।",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            );
+          }
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: sups.length,
             itemBuilder: (context, index) {
               final s = sups[index];
               return Card(
-                child: ListTile(
-                  title: Text(s.name),
-                  subtitle: Text("${s.category} - ${s.district}"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => service.deleteSupplier(s.id),
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          _buildSupplierAvatarWidget(s.name, s.image, null, radius: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  s.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.teal),
+                                ),
+                                Text(
+                                  "${s.address}, ${s.district}",
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark ? Colors.grey[300] : Colors.grey[700]),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit_rounded, color: Colors.teal),
+                            onPressed: () =>
+                                _showAddOrEditSupplierDialog(context, service, existing: s),
+                            tooltip: "সম্পাদনা করুন",
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_forever_rounded,
+                                color: Colors.redAccent),
+                            onPressed: () => _confirmDeleteSupplier(context, service, s),
+                            tooltip: "ডিলিট করুন",
+                          ),
+                        ],
+                      ),
+                      if (s.details.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            "বিবরণ: ${s.details}",
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                      ],
+                      const Divider(height: 16),
+                      Row(
+                        children: [
+                          const Icon(Icons.call, size: 14, color: Colors.teal),
+                          const SizedBox(width: 4),
+                          Text("ফোন: ${s.phone}",
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal)),
+                          if (s.whatsapp.isNotEmpty) ...[
+                            const SizedBox(width: 16),
+                            const Icon(Icons.chat, size: 14, color: Colors.green),
+                            const SizedBox(width: 4),
+                            Text("WhatsApp: ${s.whatsapp}",
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green)),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -1138,62 +1952,414 @@ class AdminSuppliersTab extends StatelessWidget {
     );
   }
 
-  void _showAddSupplierDialog(BuildContext context, PoultryService service) {
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final addrCtrl = TextEditingController();
-    final distCtrl = TextEditingController();
-    final detCtrl = TextEditingController();
-    String category = 'feed_chick';
+  void _showAddOrEditSupplierDialog(BuildContext context, PoultryService service,
+      {Supplier? existing}) {
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final imgCtrl = TextEditingController(text: existing?.image ?? '');
+    final phoneCtrl = TextEditingController(text: existing?.phone ?? '');
+    final whatsappCtrl = TextEditingController(text: existing?.whatsapp ?? '');
+    final addrCtrl = TextEditingController(text: existing?.address ?? '');
+    final distCtrl = TextEditingController(text: existing?.district ?? '');
+    final detCtrl = TextEditingController(text: existing?.details ?? '');
+    String category = existing?.category ?? 'feed_chick';
+
+    File? selectedImageFile;
+    bool isUploading = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("সাপ্লায়ার যোগ করুন"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "প্রতিষ্ঠানের নাম")),
-              DropdownButtonFormField<String>(
-                value: category,
-                items: const [
-                  DropdownMenuItem(value: 'feed_chick', child: Text("ফিড ও বাচ্চা")),
-                  DropdownMenuItem(value: 'layer', child: Text("লেয়ার")),
-                  DropdownMenuItem(value: 'equipment', child: Text("খামার যন্ত্রপাতি")),
-                  DropdownMenuItem(value: 'vaccine', child: Text("ভ্যাকসিন")),
-                  DropdownMenuItem(value: 'medicine', child: Text("মেডিসিন")),
-                  DropdownMenuItem(value: 'raw_material', child: Text("ফিডের কাঁচামাল")),
-                ],
-                onChanged: (val) => category = val!,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> pickImage(ImageSource source) async {
+              try {
+                final picker = ImagePicker();
+                final picked = await picker.pickImage(source: source, imageQuality: 80);
+                if (picked != null) {
+                  setDialogState(() {
+                    selectedImageFile = File(picked.path);
+                  });
+                }
+              } catch (e) {
+                debugPrint("Supplier Image pick error: $e");
+              }
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text(existing == null ? "নতুন সাপ্লায়ার যোগ করুন" : "সাপ্লায়ারের তথ্য আপডেট করুন"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // AVATAR PREVIEW WITH NAME INITIAL OR IMAGE
+                    Center(
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          _buildSupplierAvatarWidget(
+                            nameCtrl.text.isEmpty ? "S" : nameCtrl.text,
+                            imgCtrl.text.trim(),
+                            selectedImageFile,
+                            radius: 40,
+                          ),
+                          CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Colors.teal,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.camera_alt, size: 15, color: Colors.white),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                                  builder: (bCtx) => Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(Icons.photo_library_rounded, color: Colors.teal),
+                                          title: const Text("গ্যালারি থেকে ছবি বেছে নিন"),
+                                          onTap: () {
+                                            Navigator.pop(bCtx);
+                                            pickImage(ImageSource.gallery);
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.camera_alt_rounded, color: Colors.teal),
+                                          title: const Text("ক্যামেরা দিয়ে ছবি তুলুন"),
+                                          onTap: () {
+                                            Navigator.pop(bCtx);
+                                            pickImage(ImageSource.camera);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                          builder: (bCtx) => Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Wrap(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.photo_library_rounded, color: Colors.teal),
+                                  title: const Text("গ্যালারি থেকে ছবি বেছে নিন"),
+                                  onTap: () {
+                                    Navigator.pop(bCtx);
+                                    pickImage(ImageSource.gallery);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.camera_alt_rounded, color: Colors.teal),
+                                  title: const Text("ক্যামেরা দিয়ে ছবি তুলুন"),
+                                  onTap: () {
+                                    Navigator.pop(bCtx);
+                                    pickImage(ImageSource.camera);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add_a_photo_rounded, size: 18),
+                      label: Text(selectedImageFile != null ? "ছবি সিলেক্ট হয়েছে" : "সাপ্লায়ার ছবি আপলোড করুন"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "প্রতিষ্ঠানের/সাপ্লায়ারের নাম *", prefixIcon: Icon(Icons.store)),
+                      onChanged: (val) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: imgCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "অথবা ছবির URL (Image Link)",
+                          hintText: "https://...",
+                          prefixIcon: Icon(Icons.image)),
+                      onChanged: (val) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: category,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                          labelText: "ক্যাটাগরি", prefixIcon: Icon(Icons.category)),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'feed_chick',
+                          child: Text("ফিড ও বাচ্চা (Feed & Chick)", overflow: TextOverflow.ellipsis),
+                        ),
+                        DropdownMenuItem(
+                          value: 'layer',
+                          child: Text("লেয়ার (Layer)", overflow: TextOverflow.ellipsis),
+                        ),
+                        DropdownMenuItem(
+                          value: 'equipment',
+                          child: Text("খামার যন্ত্রপাতি (Equipment)", overflow: TextOverflow.ellipsis),
+                        ),
+                        DropdownMenuItem(
+                          value: 'vaccine',
+                          child: Text("ভ্যাকসিন (Vaccine)", overflow: TextOverflow.ellipsis),
+                        ),
+                        DropdownMenuItem(
+                          value: 'medicine',
+                          child: Text("মেডিসিন (Medicine)", overflow: TextOverflow.ellipsis),
+                        ),
+                        DropdownMenuItem(
+                          value: 'raw_material',
+                          child: Text("ফিডের কাঁচামাল (Raw Material)", overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                      onChanged: (val) => setDialogState(() => category = val!),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: "ফোন নম্বর *", prefixIcon: Icon(Icons.phone)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: whatsappCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: "WhatsApp নম্বর",
+                          hintText: "খালি রাখলে ফোন নম্বর ব্যবহৃত হবে",
+                          prefixIcon: Icon(Icons.chat)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: addrCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "ঠিকানা", prefixIcon: Icon(Icons.location_city)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: distCtrl,
+                      decoration: const InputDecoration(
+                          labelText: "জেলা", prefixIcon: Icon(Icons.map)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: detCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                          labelText: "বিস্তারিত বিবরণ", prefixIcon: Icon(Icons.description)),
+                    ),
+                  ],
+                ),
               ),
-              TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: "ফোন নম্বর")),
-              TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: "ঠিকানা")),
-              TextField(controller: distCtrl, decoration: const InputDecoration(labelText: "জেলা")),
-              TextField(controller: detCtrl, decoration: const InputDecoration(labelText: "বিবরণ")),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: isUploading ? null : () => Navigator.pop(ctx),
+                  child: const Text("বাতিল"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  onPressed: isUploading
+                      ? null
+                      : () async {
+                          if (nameCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("দয়া করে প্রতিষ্ঠানের নাম লিখুন।")),
+                            );
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isUploading = true;
+                          });
+
+                          String finalImgUrl = imgCtrl.text.trim();
+                          if (selectedImageFile != null) {
+                            final uploadedUrl = await service.uploadSupplierImage(selectedImageFile!);
+                            if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+                              finalImgUrl = uploadedUrl;
+                            }
+                          }
+
+                          final supObj = Supplier(
+                            id: existing?.id ?? '',
+                            name: nameCtrl.text.trim(),
+                            image: finalImgUrl,
+                            category: category,
+                            phone: phoneCtrl.text.trim(),
+                            whatsapp: whatsappCtrl.text.trim().isNotEmpty
+                                ? whatsappCtrl.text.trim()
+                                : phoneCtrl.text.trim(),
+                            address: addrCtrl.text.trim(),
+                            district: distCtrl.text.trim(),
+                            details: detCtrl.text.trim(),
+                          );
+
+                          if (existing == null) {
+                            await service.addSupplier(supObj);
+                          } else {
+                            await service.updateSupplier(existing.id, supObj.toMap());
+                          }
+
+                          if (context.mounted) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(existing == null
+                                    ? "নতুন সাপ্লায়ার সফলভাবে যোগ করা হয়েছে!"
+                                    : "সাপ্লায়ারের তথ্য আপডেট করা হয়েছে!"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                  child: isUploading
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text("সংরক্ষণ করুন", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSupplierAvatarWidget(
+    String name,
+    String imgPath,
+    File? localFile, {
+    double radius = 28,
+  }) {
+    final double size = radius * 2;
+    String firstLetter = 'S';
+    final trimmed = name.trim();
+    if (trimmed.isNotEmpty) {
+      firstLetter = trimmed.substring(0, 1).toUpperCase();
+    }
+
+    final colors = [
+      Colors.teal,
+      Colors.indigo,
+      Colors.deepOrange,
+      Colors.purple,
+      Colors.blue,
+      Colors.green,
+      Colors.amber.shade900,
+      Colors.pink.shade700,
+    ];
+    final avatarColor = colors[name.hashCode.abs() % colors.length];
+
+    Widget nameLetterAvatar = CircleAvatar(
+      radius: radius,
+      backgroundColor: avatarColor.withOpacity(0.15),
+      child: Text(
+        firstLetter,
+        style: TextStyle(
+          fontSize: radius * 0.9,
+          fontWeight: FontWeight.bold,
+          color: avatarColor,
         ),
+      ),
+    );
+
+    if (localFile != null) {
+      return ClipOval(
+        child: Image.file(
+          localFile,
+          height: size,
+          width: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => nameLetterAvatar,
+        ),
+      );
+    }
+
+    if (imgPath.isNotEmpty) {
+      if (imgPath.startsWith('http')) {
+        return ClipOval(
+          child: Image.network(
+            imgPath,
+            height: size,
+            width: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => nameLetterAvatar,
+          ),
+        );
+      }
+      if (imgPath.startsWith('data:image')) {
+        try {
+          final base64Str = imgPath.split(',').last;
+          final bytes = base64Decode(base64Str);
+          return ClipOval(
+            child: Image.memory(
+              bytes,
+              height: size,
+              width: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => nameLetterAvatar,
+            ),
+          );
+        } catch (_) {}
+      }
+      try {
+        final file = File(imgPath);
+        if (file.existsSync()) {
+          return ClipOval(
+            child: Image.file(
+              file,
+              height: size,
+              width: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => nameLetterAvatar,
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+
+    return nameLetterAvatar;
+  }
+
+  void _confirmDeleteSupplier(BuildContext context, PoultryService service, Supplier supplier) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("সাপ্লায়ার ডিলিট করতে চান?"),
+        content: Text("${supplier.name} কে কি ডাটাবেজ থেকে মুছে ফেলতে চান?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("বাতিল")),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () async {
-              if (nameCtrl.text.isNotEmpty) {
-                await service.addSupplier(
-                  Supplier(
-                    id: '',
-                    name: nameCtrl.text,
-                    category: category,
-                    phone: phoneCtrl.text,
-                    address: addrCtrl.text,
-                    district: distCtrl.text,
-                    details: detCtrl.text,
-                  ),
-                );
-                if (context.mounted) Navigator.pop(ctx);
-              }
+              await service.deleteSupplier(supplier.id);
+              if (context.mounted) Navigator.pop(ctx);
             },
-            child: const Text("সংরক্ষণ করুন"),
+            child: const Text("ডিলিট করুন", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1435,11 +2601,12 @@ class _AdminArticlesTabState extends ConsumerState<AdminArticlesTab> {
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       value: category,
+                      isExpanded: true,
                       decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                       items: const [
-                        DropdownMenuItem(value: 'parents_stock', child: Text("প্যারেন্টস স্টক (Parents Stock)")),
-                        DropdownMenuItem(value: 'hatchery', child: Text("হ্যাচারি (Hatchery)")),
-                        DropdownMenuItem(value: 'general', child: Text("সাধারণ নিবন্ধ (General)")),
+                        DropdownMenuItem(value: 'parents_stock', child: Text("প্যারেন্টস স্টক (Parents Stock)", overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'hatchery', child: Text("হ্যাচারি (Hatchery)", overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: 'general', child: Text("সাধারণ নিবন্ধ (General)", overflow: TextOverflow.ellipsis)),
                       ],
                       onChanged: (val) {
                         if (val != null) setDialogState(() => category = val);
