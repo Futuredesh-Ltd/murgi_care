@@ -7,11 +7,13 @@ class Doctor {
   final String qualification;
   final String experience;
   final String phone;
+  final String whatsapp;
   final String email;
   final String address;
   final String district;
   final String upazila;
   final String profileImage;
+  final String description;
   final String availableTime;
   final bool isActive;
 
@@ -22,11 +24,13 @@ class Doctor {
     required this.qualification,
     required this.experience,
     required this.phone,
+    this.whatsapp = '',
     this.email = '',
     required this.address,
     required this.district,
     this.upazila = '',
     this.profileImage = '',
+    this.description = '',
     this.availableTime = '',
     this.isActive = true,
   });
@@ -40,11 +44,13 @@ class Doctor {
       qualification: data['qualification'] ?? '',
       experience: data['experience'] ?? '',
       phone: data['phone'] ?? '',
+      whatsapp: data['whatsapp'] ?? data['phone'] ?? '',
       email: data['email'] ?? '',
       address: data['address'] ?? '',
       district: data['district'] ?? '',
       upazila: data['upazila'] ?? '',
       profileImage: data['profileImage'] ?? '',
+      description: data['description'] ?? '',
       availableTime: data['availableTime'] ?? '',
       isActive: data['isActive'] ?? true,
     );
@@ -57,11 +63,13 @@ class Doctor {
       'qualification': qualification,
       'experience': experience,
       'phone': phone,
+      'whatsapp': whatsapp.isNotEmpty ? whatsapp : phone,
       'email': email,
       'address': address,
       'district': district,
       'upazila': upazila,
       'profileImage': profileImage,
+      'description': description,
       'availableTime': availableTime,
       'isActive': isActive,
       'updatedAt': FieldValue.serverTimestamp(),
