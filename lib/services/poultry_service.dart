@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import '../model/banner_model.dart';
 import '../model/announcement_model.dart';
 import '../model/market_price_model.dart';
 import '../model/doctor_model.dart';
+import '../model/doctor_request_model.dart';
 import '../model/supplier_model.dart';
 import '../model/daily_card_model.dart';
 import '../model/article.dart';
@@ -182,7 +184,7 @@ class PoultryService {
       ),
       BannerItem(
         id: 'def2',
-        imageUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=800&auto=format&fit=crop',
+        imageUrl: 'https://images.unsplash.com/photo-1569058242252-623df46b5025?q=80&w=800&auto=format&fit=crop',
         title: 'রোগ বালাই থেকে খামার রক্ষা করুন',
         description: 'এআই অ্যাপ দিয়ে দ্রুত সঠিক চিকিৎসা নিশ্চিত করুন',
         priority: 2,
@@ -431,6 +433,168 @@ class PoultryService {
     }
   }
 
+  static final List<DoctorContactRequest> _localDoctorRequests = [];
+  static final StreamController<List<DoctorContactRequest>> _localRequestsStreamCtrl =
+      StreamController<List<DoctorContactRequest>>.broadcast();
+
+  // --- DOCTOR CONTACT REQUESTS ---
+  Future<bool> requestDoctorContact(DoctorContactRequest request) async {
+    final String reqId = request.id.isNotEmpty
+        ? request.id
+        : "req_${DateTime.now().millisecondsSinceEpoch}";
+    final localReq = DoctorContactRequest(
+      id: reqId,
+      userId: request.userId,
+      userName: request.userName,
+      userPhone: request.userPhone,
+      userEmail: request.userEmail,
+      doctorId: request.doctorId,
+      doctorName: request.doctorName,
+      doctorSpecialization: request.doctorSpecialization,
+      status: request.status,
+      permission: request.permission,
+      requestedAt: request.requestedAt ?? DateTime.now(),
+    );
+
+    // Save locally
+    _localDoctorRequests.removeWhere(
+        (r) => r.id == reqId || (r.userId == localReq.userId && r.doctorId == localReq.doctorId));
+    _localDoctorRequests.insert(0, localReq);
+    _localRequestsStreamCtrl.add(_localDoctorRequests);
+
+    try {
+      final map = localReq.toMap();
+      await _db.collection('requests').doc(reqId).set(map);
+      try {
+        await _db.collection('doctor_requests').doc(reqId).set(map);
+      } catch (_) {}
+      return true;
+    } catch (e) {
+      debugPrint("requestDoctorContact firestore error (local state active): $e");
+      return true; // Local update succeeds
+    }
+  }
+
+  Stream<List<DoctorContactRequest>> getDoctorContactRequestsStream() {
+    return _db
+        .collection('requests')
+        .snapshots()
+        .map((snapshot) {
+      final firestoreList = snapshot.docs
+          .map((doc) => DoctorContactRequest.fromFirestore(doc))
+          .toList();
+      final Map<String, DoctorContactRequest> map = {};
+      for (final r in _localDoctorRequests) {
+        map[r.id] = r;
+      }
+      for (final r in firestoreList) {
+        map[r.id] = r;
+      }
+      final list = map.values.toList();
+      list.sort((a, b) {
+        final dtA = a.requestedAt ?? DateTime.now();
+        final dtB = b.requestedAt ?? DateTime.now();
+        return dtB.compareTo(dtA);
+      });
+      return list;
+    }).handleError((e) {
+      debugPrint("getDoctorContactRequestsStream firestore error (using local fallback): $e");
+      final list = List<DoctorContactRequest>.from(_localDoctorRequests);
+      list.sort((a, b) {
+        final dtA = a.requestedAt ?? DateTime.now();
+        final dtB = b.requestedAt ?? DateTime.now();
+        return dtB.compareTo(dtA);
+      });
+      return list;
+    });
+  }
+
+  Stream<List<DoctorContactRequest>> getUserDoctorRequestsStream(String userId) {
+    final List<DoctorContactRequest> userLocal = _localDoctorRequests
+        .where((r) => userId.isEmpty || r.userId == userId)
+        .toList();
+
+    if (userId.isEmpty) {
+      return Stream.value(userLocal);
+    }
+
+    return _db
+        .collection('requests')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      final firestoreList = snapshot.docs
+          .map((doc) => DoctorContactRequest.fromFirestore(doc))
+          .toList();
+      final Map<String, DoctorContactRequest> map = {};
+      for (final r in userLocal) {
+        map[r.doctorId] = r;
+      }
+      for (final r in firestoreList) {
+        map[r.doctorId] = r;
+      }
+      return map.values.toList();
+    }).handleError((e) {
+      debugPrint("getUserDoctorRequestsStream firestore error (using local fallback): $e");
+      return userLocal;
+    });
+  }
+
+  Future<bool> updateDoctorRequestStatus(String requestId, String status, {String? permission}) async {
+    final perm = permission ?? (status == 'accepted' ? 'yes' : 'no');
+
+    final idx = _localDoctorRequests.indexWhere((r) => r.id == requestId);
+    if (idx != -1) {
+      final old = _localDoctorRequests[idx];
+      _localDoctorRequests[idx] = DoctorContactRequest(
+        id: old.id,
+        userId: old.userId,
+        userName: old.userName,
+        userPhone: old.userPhone,
+        userEmail: old.userEmail,
+        doctorId: old.doctorId,
+        doctorName: old.doctorName,
+        doctorSpecialization: old.doctorSpecialization,
+        status: status,
+        permission: perm,
+        requestedAt: old.requestedAt,
+        updatedAt: DateTime.now(),
+      );
+      _localRequestsStreamCtrl.add(_localDoctorRequests);
+    }
+
+    final data = {
+      'status': status,
+      'permission': perm,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    try {
+      await _db.collection('requests').doc(requestId).update(data);
+      try {
+        await _db.collection('doctor_requests').doc(requestId).update(data);
+      } catch (_) {}
+      return true;
+    } catch (e) {
+      debugPrint("updateDoctorRequestStatus firestore error: $e");
+      return true; // Local update succeeds
+    }
+  }
+
+  Future<bool> deleteDoctorRequest(String requestId) async {
+    _localDoctorRequests.removeWhere((r) => r.id == requestId);
+    _localRequestsStreamCtrl.add(_localDoctorRequests);
+    try {
+      await _db.collection('requests').doc(requestId).delete();
+      try {
+        await _db.collection('doctor_requests').doc(requestId).delete();
+      } catch (_) {}
+      return true;
+    } catch (e) {
+      debugPrint("deleteDoctorRequest firestore error: $e");
+      return true;
+    }
+  }
+
   // --- SUPPLIERS / DIRECTORY ---
   Stream<List<Supplier>> getSuppliersStream({String? category}) {
     return _db.collection('suppliers').snapshots().map((snapshot) {
@@ -530,6 +694,60 @@ class PoultryService {
     } catch (e) {
       debugPrint("deleteSupplier error: $e");
       return false;
+    }
+  }
+
+  // --- SUPPLIER IMAGE UPLOAD ---
+  Future<String?> uploadSupplierImage(File imageFile) async {
+    try {
+      final fileName = 'supplier_${DateTime.now().millisecondsSinceEpoch}_${imageFile.hashCode}.jpg';
+      final ref = _storage.ref().child('suppliers').child(fileName);
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      final uploadTask = ref.putFile(imageFile, metadata);
+      final snapshot = await uploadTask.timeout(const Duration(seconds: 6));
+
+      if (snapshot.state == TaskState.success) {
+        return await snapshot.ref.getDownloadURL();
+      }
+    } catch (e) {
+      debugPrint("uploadSupplierImage storage error: $e");
+    }
+
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final base64Str = base64Encode(bytes);
+      return 'data:image/jpeg;base64,$base64Str';
+    } catch (e) {
+      debugPrint("uploadSupplierImage base64 fallback error: $e");
+      return null;
+    }
+  }
+
+  // --- DOCTOR IMAGE UPLOAD ---
+  Future<String?> uploadDoctorImage(File imageFile) async {
+    try {
+      final fileName = 'doctor_${DateTime.now().millisecondsSinceEpoch}_${imageFile.hashCode}.jpg';
+      final ref = _storage.ref().child('doctors').child(fileName);
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      final uploadTask = ref.putFile(imageFile, metadata);
+      final snapshot = await uploadTask.timeout(const Duration(seconds: 6));
+
+      if (snapshot.state == TaskState.success) {
+        return await snapshot.ref.getDownloadURL();
+      }
+    } catch (e) {
+      debugPrint("uploadDoctorImage storage error (using base64 fallback): $e");
+    }
+
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final base64Str = base64Encode(bytes);
+      return 'data:image/jpeg;base64,$base64Str';
+    } catch (e) {
+      debugPrint("uploadDoctorImage base64 fallback error: $e");
+      return null;
     }
   }
 
