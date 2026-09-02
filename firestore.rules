@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Public read & write for app collections
+    match /banner/{document} {
+      allow read, write: if true;
+    }
+    match /announcements/{document} {
+      allow read, write: if true;
+    }
+    match /market_prices/{document} {
+      allow read, write: if true;
+    }
+    match /daily_card/{document} {
+      allow read, write: if true;
+    }
+    match /doctors/{document} {
+      allow read, write: if true;
+    }
+    match /suppliers/{document} {
+      allow read, write: if true;
+    }
+    match /requests/{document} {
+      allow read, write: if true;
+    }
+    match /doctor_requests/{document} {
+      allow read, write: if true;
+    }
+
+    // User personal profiles & databank
+    match /users/{userId} {
+      allow read, write: if request.auth != null;
+      match /{allPaths=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}
