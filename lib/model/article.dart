@@ -314,7 +314,7 @@ Strictly sort out cracked, misshapen, dirty, or double-yolked eggs before shippi
       titleBn: "ইনকিউবেশন তাপমাত্রা ও আর্দ্রতা নিয়ন্ত্রণ গাইড",
       author: "Hatchery Specialist R. Karim",
       readTime: "8 min read",
-      imageUrl: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&q=80&w=1000",
+      imageUrl: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&q=80&w=1000",
       contentEn: '''Precision control of incubator environmental parameters is the single most critical factor determining chick hatchability and quality.
 
 1. Setter Temperature & Relative Humidity
@@ -348,7 +348,7 @@ Target an egg weight loss of 11%-12% from setter loading to Day 18 transfer to e
       titleBn: "ডিম ক্যান্ডলিং ও ভ্রূণ বিকাশ পরীক্ষা পদ্ধতি",
       author: "Eng. M. Rahman",
       readTime: "6 min read",
-      imageUrl: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=1000",
+      imageUrl: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&q=80&w=1000",
       contentEn: '''Egg candling provides invaluable real-time insights into flock fertility, incubator performance, and embryonic mortality stages.
 
 1. Day 7 Candling
