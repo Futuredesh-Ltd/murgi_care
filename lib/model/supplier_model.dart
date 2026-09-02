@@ -3,8 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Supplier {
   final String id;
   final String name;
+  final String image;
   final String category; // 'feed_chick', 'layer', 'equipment', 'vaccine', 'medicine', 'raw_material'
   final String phone;
+  final String whatsapp;
   final String email;
   final String address;
   final String district;
@@ -14,8 +16,10 @@ class Supplier {
   Supplier({
     required this.id,
     required this.name,
+    this.image = '',
     required this.category,
     required this.phone,
+    this.whatsapp = '',
     this.email = '',
     required this.address,
     required this.district,
@@ -28,8 +32,10 @@ class Supplier {
     return Supplier(
       id: doc.id,
       name: data['name'] ?? '',
+      image: data['image'] ?? data['profileImage'] ?? '',
       category: data['category'] ?? '',
       phone: data['phone'] ?? '',
+      whatsapp: data['whatsapp'] ?? data['phone'] ?? '',
       email: data['email'] ?? '',
       address: data['address'] ?? '',
       district: data['district'] ?? '',
@@ -41,8 +47,10 @@ class Supplier {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
+      'image': image,
       'category': category,
       'phone': phone,
+      'whatsapp': whatsapp.isNotEmpty ? whatsapp : phone,
       'email': email,
       'address': address,
       'district': district,
