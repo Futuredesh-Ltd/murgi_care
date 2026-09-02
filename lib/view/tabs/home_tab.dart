@@ -19,6 +19,8 @@ import '../screens/farm_management_screen.dart';
 import '../screens/vaccine_info_screen.dart';
 import '../screens/poultry_diseases_screen.dart';
 import '../screens/disease_diagnosis_screen.dart';
+import '../screens/databank/breeder_monitor_screen.dart';
+import '../screens/databank/vaccination_schedule_screen.dart';
 
 class HomeTab extends ConsumerStatefulWidget {
   final bool isEnglish;
@@ -158,6 +160,11 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildParentStockHubGrid(context, isEng),
+                    ),
+                    const SizedBox(height: 20),
                     _buildSectionHeader(
                       title: isEng ? "Parents Stock Articles" : "প্যারেন্টস স্টক নিবন্ধ",
                       subtitle: isEng
@@ -192,6 +199,11 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildHatcheryHubGrid(context, isEng),
+                    ),
+                    const SizedBox(height: 20),
                     _buildSectionHeader(
                       title: isEng ? "Hatchery Articles" : "হ্যাচারি নিবন্ধ",
                       subtitle: isEng
@@ -677,6 +689,12 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   }
 
   Widget _buildGeneralArticlesSection(bool isEng) {
+    final List<Article> allFallbackArticles = [
+      ...Article.mockArticles,
+      ...Article.parentsStockArticles,
+      ...Article.hatcheryArticles,
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -689,16 +707,16 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           color: Colors.teal,
         ),
         StreamBuilder<List<Article>>(
-          stream: _poultryService.getArticlesStream(category: 'general'),
+          stream: _poultryService.getArticlesStream(category: 'all'),
           builder: (context, snapshot) {
             final liveArticles = snapshot.data;
             final articles = (liveArticles != null && liveArticles.isNotEmpty)
                 ? liveArticles
-                : Article.mockArticles;
+                : allFallbackArticles;
             return ArticleGridWidget(
               articles: articles,
               isEnglish: isEng,
-              categoryTag: isEng ? "General Guide" : "পোল্ট্রি গাইড",
+              categoryTag: isEng ? "Poultry Guide" : "পোল্ট্রি গাইড",
               categoryColor: Colors.teal,
             );
           },
@@ -1104,12 +1122,6 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(context, MaterialPageRoute(builder: (_) => DiseaseDiagnosisScreen(isEnglish: isEng))),
       },
       {
-        "title": isEng ? "Disease Detection" : "রোগ নির্ণয়",
-        "icon": Icons.document_scanner_rounded,
-        "color": Colors.teal,
-        "onTap": widget.onOpenDetection, // Connects directly to AI Disease Detection!
-      },
-      {
         "title": isEng ? "Poultry Diseases" : "রোগ বালাই",
         "icon": Icons.coronavirus_rounded,
         "color": Colors.redAccent,
@@ -1179,6 +1191,314 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // --- 6. PARENT STOCK HUB GRID ---
+  Widget _buildParentStockHubGrid(BuildContext context, bool isEng) {
+    final List<Map<String, dynamic>> items = [
+      {
+        "title": isEng ? "Broiler PS Guide" : "ব্রয়লার পিএস গাইড",
+        "image": "assets/ps_broiler.jpg",
+        "color": Colors.indigo,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Color Chicken PS" : "কালার চিকেন পিএস",
+        "image": "assets/ps_color.jpg",
+        "color": Colors.orange.shade800,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Brown Layer PS" : "ব্রাউন লেয়ার পিএস",
+        "image": "assets/ps_brown_layer.jpg",
+        "color": Colors.brown,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "White Layer PS" : "হোয়াইট লেয়ার পিএস",
+        "image": "assets/ps_white_layer.jpg",
+        "color": Colors.blueGrey,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Duck PS" : "হাঁস পিএস",
+        "image": "assets/ps_duck.jpg",
+        "color": Colors.teal,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "All STD Data" : "সকল এসটিডি ডেটা",
+        "image": "assets/ps_std_data.jpg",
+        "color": Colors.amber.shade900,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
+      },
+    ];
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          title: isEng ? "Parent Stock Guides & Standards" : "প্যারেন্টস স্টক তথ্য ও গাইড",
+          subtitle: isEng
+              ? "Comprehensive management standards for all breeder lines"
+              : "সকল প্যারেন্টস স্টক ব্লকের পূর্ণাঙ্গ নির্দেশিকা ও স্ট্যান্ডার্ড",
+          icon: Icons.grid_view_rounded,
+          color: Colors.indigo,
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.95,
+          ),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final Color color = item["color"] as Color;
+
+            return InkWell(
+              onTap: item["onTap"] as VoidCallback,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? color.withValues(alpha: 0.3)
+                        : color.withValues(alpha: 0.2),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.2)
+                          : color.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            item["image"] as String,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => Container(
+                              color: color.withValues(alpha: 0.1),
+                              child: Icon(Icons.pets_rounded, color: color, size: 40),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12, left: 8, right: 8),
+                      child: Text(
+                        item["title"] as String,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.titleMedium?.color,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // --- 7. HATCHERY HUB GRID ---
+  Widget _buildHatcheryHubGrid(BuildContext context, bool isEng) {
+    final List<Map<String, dynamic>> items = [
+      {
+        "title": isEng ? "Troubleshooting" : "সমস্যা সমাধান",
+        "image": "assets/hatchery_troubleshooting.jpg",
+        "color": Colors.green.shade700,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Fine Tuning" : "ইনকিউবেটর টিউনিং",
+        "image": "assets/hatchery_fine_tuning.jpg",
+        "color": Colors.teal,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Embryonic Stages" : "ভ্রূণ বিকাশ পর্যায়",
+        "image": "assets/hatchery_embryonic_stages.jpg",
+        "color": Colors.orange.shade800,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => DiseaseDiagnosisScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Important Topics" : "গুরুত্বপূর্ণ বিষয়সমূহ",
+        "image": "assets/hatchery_important_topics.jpg",
+        "color": Colors.amber.shade900,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Management" : "হ্যাচারি ব্যবস্থাপনা",
+        "image": "assets/hatchery_management.jpg",
+        "color": Colors.lightGreen.shade800,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => FarmManagementScreen(isEnglish: isEng))),
+      },
+      {
+        "title": isEng ? "Pull-Out Check" : "পুল-আউট চেকলিস্ট",
+        "image": "assets/hatchery_pull_out_check.jpg",
+        "color": Colors.teal.shade800,
+        "onTap": () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
+      },
+    ];
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          title: isEng ? "Hatchery Hub & Tools" : "হ্যাচারি টুলস ও তথ্য হাব",
+          subtitle: isEng
+              ? "Incubation parameters, embryonic stages & chick quality checks"
+              : "ইনকিউবেশন প্যারামিটার, ভ্রূণ বিকাশ পর্যায় ও বাচ্চার মান চেকলিস্ট",
+          icon: Icons.grid_view_rounded,
+          color: Colors.orange.shade800,
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.95,
+          ),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final Color color = item["color"] as Color;
+
+            return InkWell(
+              onTap: item["onTap"] as VoidCallback,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? color.withValues(alpha: 0.3)
+                        : color.withValues(alpha: 0.2),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.2)
+                          : color.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            item["image"] as String,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => Container(
+                              color: color.withValues(alpha: 0.1),
+                              child: Icon(Icons.egg_rounded, color: color, size: 40),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12, left: 8, right: 8),
+                      child: Text(
+                        item["title"] as String,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.titleMedium?.color,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
