@@ -19,8 +19,17 @@ import '../screens/farm_management_screen.dart';
 import '../screens/vaccine_info_screen.dart';
 import '../screens/poultry_diseases_screen.dart';
 import '../screens/disease_diagnosis_screen.dart';
-import '../screens/databank/breeder_monitor_screen.dart';
+import '../screens/hatchery_troubleshooting_screen.dart';
+import '../screens/hatchery_fine_tuning_screen.dart';
+import '../screens/hatchery_operation_guide_screen.dart';
+import '../screens/embryonic_stages_screen.dart';
+import '../screens/databank/broiler_ps_guide_screen.dart';
+import '../screens/databank/color_ps_summary_screen.dart';
+import '../screens/databank/brown_layer_summary_screen.dart';
+import '../screens/databank/white_layer_summary_screen.dart';
+import '../screens/databank/duck_summary_screen.dart';
 import '../screens/databank/vaccination_schedule_screen.dart';
+import '../screens/ps_standard_data_screen.dart';
 
 class HomeTab extends ConsumerStatefulWidget {
   final bool isEnglish;
@@ -1212,7 +1221,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+                builder: (_) => BroilerPSGuideScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Color Chicken PS" : "কালার চিকেন পিএস",
@@ -1221,7 +1230,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+                builder: (_) => ColorPSSummaryScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Brown Layer PS" : "ব্রাউন লেয়ার পিএস",
@@ -1230,7 +1239,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+                builder: (_) => BrownLayerPSSummaryScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "White Layer PS" : "হোয়াইট লেয়ার পিএস",
@@ -1239,7 +1248,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+                builder: (_) => WhiteLayerPSSummaryScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Duck PS" : "হাঁস পিএস",
@@ -1248,7 +1257,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+                builder: (_) => DuckPSSummaryScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "All STD Data" : "সকল এসটিডি ডেটা",
@@ -1257,7 +1266,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
+                builder: (_) => PSStandardDataScreen(isEnglish: isEng))),
       },
     ];
 
@@ -1366,7 +1375,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
+                builder: (_) => HatcheryTroubleshootingScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Fine Tuning" : "ইনকিউবেটর টিউনিং",
@@ -1375,7 +1384,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => BreederMonitorScreen(isEnglish: isEng))),
+                builder: (_) => HatcheryFineTuningScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Embryonic Stages" : "ভ্রূণ বিকাশ পর্যায়",
@@ -1384,7 +1393,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => DiseaseDiagnosisScreen(isEnglish: isEng))),
+                builder: (_) => EmbryonicStagesScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Important Topics" : "গুরুত্বপূর্ণ বিষয়সমূহ",
@@ -1396,13 +1405,13 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 builder: (_) => VaccinationScheduleScreen(isEnglish: isEng))),
       },
       {
-        "title": isEng ? "Management" : "হ্যাচারি ব্যবস্থাপনা",
+        "title": isEng ? "Operation Guide" : "পরিচালনা গাইড",
         "image": "assets/hatchery_management.jpg",
         "color": Colors.lightGreen.shade800,
         "onTap": () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => FarmManagementScreen(isEnglish: isEng))),
+                builder: (_) => HatcheryOperationGuideScreen(isEnglish: isEng))),
       },
       {
         "title": isEng ? "Pull-Out Check" : "পুল-আউট চেকলিস্ট",
