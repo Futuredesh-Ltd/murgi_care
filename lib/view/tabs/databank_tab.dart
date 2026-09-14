@@ -6,7 +6,13 @@ import '../screens/databank/vaccination_schedule_screen.dart';
 import '../screens/databank/lab_report_screen.dart';
 import '../screens/databank/disease_identification_screen.dart';
 import '../screens/databank/breeder_monitor_screen.dart';
+import '../screens/databank/broiler_ps_guide_screen.dart';
+import '../screens/databank/color_ps_summary_screen.dart';
+import '../screens/databank/brown_layer_summary_screen.dart';
+import '../screens/databank/white_layer_summary_screen.dart';
+import '../screens/databank/duck_summary_screen.dart';
 import '../screens/databank/feed_formulation_screen.dart';
+import '../screens/ps_standard_data_screen.dart';
 import '../screens/databank/molting_monitor_screen.dart';
 import '../screens/databank/investment_calculator_screen.dart';
 import '../screens/databank/biosecurity_audit_screen.dart';
@@ -68,6 +74,60 @@ class DataBankTab extends ConsumerWidget {
         'icon': Icons.trending_up_rounded,
         'color': Colors.teal,
         'screen': BreederMonitorScreen(isEnglish: isEng),
+      },
+      {
+        'titleEn': 'Broiler PS Management Guide.',
+        'titleBn': 'ব্রয়লার পিএস ব্যবস্থাপনা গাইড',
+        'descEn': 'Complete brooding, lighting, ventilation, feeding, grading and male management guides.',
+        'descBn': 'ব্রুডিং, লাইটিং, ভেন্টিলেশন, ফিডিং, গ্রেডিং ও মেল ম্যানেজমেন্ট নির্দেশিকা।',
+        'icon': Icons.menu_book_rounded,
+        'color': const Color(0xFF00838F),
+        'screen': BroilerPSGuideScreen(isEnglish: isEng),
+      },
+      {
+        'titleEn': 'Color PS Summary & Technical Data.',
+        'titleBn': 'কালার পিএস সারসংক্ষেপ ও টেকনিক্যাল ডাটা',
+        'descEn': 'Technical data, characteristics, performance & tips for Sasso (SA51A, SA31A) and Hubbard (JA 57 Ki, Redbro Mini) PS.',
+        'descBn': 'সাসো (SA51A, SA31A) ও হাবার্ড (JA 57 Ki, রেডব্রো মিনি) কালার পিএস কারিগরি ডাটা ও টিপস।',
+        'icon': Icons.auto_awesome_motion_rounded,
+        'color': Colors.orange.shade800,
+        'screen': ColorPSSummaryScreen(isEnglish: isEng),
+      },
+      {
+        'titleEn': 'Brown Layer PS Summary & Breeds.',
+        'titleBn': 'ব্রাউন লেয়ার পিএস সারসংক্ষেপ ও ব্রিড পরিচিতি',
+        'descEn': 'Comprehensive characteristics and origin details for ISA Brown, Lohmann Brown, Hy-Line Brown, Bovans Brown & more.',
+        'descBn': 'আইএসএ ব্রাউন, লোহম্যান ব্রাউন, হাই-লাইন ব্রাউন, বোভান্স ব্রাউন সহ সেরা ব্রাউন লেয়ার ব্রিড তথ্য।',
+        'icon': Icons.egg_alt_rounded,
+        'color': Colors.brown,
+        'screen': BrownLayerPSSummaryScreen(isEnglish: isEng),
+      },
+      {
+        'titleEn': 'White Layer PS Summary & Breeds.',
+        'titleBn': 'হোয়াইট লেয়ার পিএস সারসংক্ষেপ ও ব্রিড পরিচিতি',
+        'descEn': 'Key specs & origins for Hy-Line W-36, Lohmann LSL, Shaver White, Bovans White, Novogen White, Dekalb White & Leghorn.',
+        'descBn': 'হাই-লাইন W-36, লোহম্যান এলএসএল, শেভার হোয়াইট, বোভান্স হোয়াইট সহ হোয়াইট লেয়ার ব্রিড তথ্য।',
+        'icon': Icons.egg_outlined,
+        'color': Colors.blueGrey,
+        'screen': WhiteLayerPSSummaryScreen(isEnglish: isEng),
+      },
+      {
+        'titleEn': 'Duck PS Summary & Breeds.',
+        'titleBn': 'হাঁস পিএস সারসংক্ষেপ ও ব্রিড পরিচিতি',
+        'descEn': 'Characteristics & origins for Khaki Campbell, Indian Runner, Pekin Duck, Cherry Valley, Muscovy & Jinding Duck.',
+        'descBn': 'খাকি ক্যাম্পবেল, ইন্ডিয়ান রানার, পেকিন, চেরি ভ্যালি, মাসকোভি ও জিনডিং হাঁসের ব্রিড পরিচিতি।',
+        'icon': Icons.water_drop_rounded,
+        'color': Colors.teal,
+        'screen': DuckPSSummaryScreen(isEnglish: isEng),
+      },
+      {
+        'titleEn': 'PS Standard Data (All Breeds).',
+        'titleBn': 'পিএস স্ট্যান্ডার্ড ডাটা (সকল ব্রিড)',
+        'descEn': 'Access parent stock standard calculators for Broiler PS, Color PS, Layer PS and Duck PS breeds.',
+        'descBn': 'ব্রয়লার পিএস, কালার পিএস, লেয়ার পিএস ও হাঁস পিএস স্ট্যান্ডার্ড ডাটা ক্যালকুলেটর।',
+        'icon': Icons.bar_chart_rounded,
+        'color': Colors.amber.shade900,
+        'screen': PSStandardDataScreen(isEnglish: isEng),
       },
       {
         'titleEn': 'Feed Formulation for Poultry.',
