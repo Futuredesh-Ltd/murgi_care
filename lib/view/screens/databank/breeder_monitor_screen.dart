@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../model/local_databank_models.dart';
 import '../../../controller/local_databank_providers.dart';
 import 'weekly_breeder_input_screen.dart';
+import 'broiler_ps_guide_screen.dart';
 
 class BreederMonitorScreen extends ConsumerStatefulWidget {
   final bool isEnglish;
@@ -60,6 +61,20 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
           isEng ? "Breeder Development Monitor" : "ব্রিডার ডেভেলপমেন্ট মনিটর",
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_book_rounded, color: Color(0xFF00838F)),
+            tooltip: isEng ? "Broiler PS Guide" : "ব্রয়লার পিএস গাইড",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BroilerPSGuideScreen(isEnglish: isEng),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.teal))
