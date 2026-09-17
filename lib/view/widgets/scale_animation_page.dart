@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
-final scaleAnimationTriggerProvider =
-    StateProvider.autoDispose.family<bool, String>((ref, id) => false);
+final scaleAnimationTriggerProvider = StateProvider.autoDispose
+    .family<bool, String>((ref, id) => false);
 
 class ScaleAnimationPage extends ConsumerStatefulWidget {
   final Widget child;
@@ -32,9 +33,8 @@ class _ScaleAnimationPageState extends ConsumerState<ScaleAnimationPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref
-            .read(scaleAnimationTriggerProvider(widget.id).notifier)
-            .state = true;
+        ref.read(scaleAnimationTriggerProvider(widget.id).notifier).state =
+            true;
       }
     });
   }
