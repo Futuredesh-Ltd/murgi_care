@@ -56,8 +56,8 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            if (keystorePropertiesFile.exists()) {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
                 storeFile = keystoreProperties["storeFile"]?.let { file(it) }
@@ -74,8 +74,12 @@ android {
             
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             
-            // Link to the signing config defined above
-            signingConfig = signingConfigs.getByName("release")
+            // Link to the signing config defined above, or fallback to debug if key.properties is not present
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
 
             // 2026 Android requirement for 16 KB page alignment
             packaging {
