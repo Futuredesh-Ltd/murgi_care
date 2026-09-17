@@ -1,5 +1,5 @@
-import 'package:appcare_flutter/appcare_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class CustomWidgets {
   static void showDisclaimer(BuildContext context, bool isEnglish) {
@@ -166,13 +166,7 @@ class CustomWidgets {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                content,
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.6,
-                ),
-              ),
+              Text(content, style: const TextStyle(fontSize: 15, height: 1.6)),
             ],
           ),
         ),
@@ -272,9 +266,9 @@ class CustomWidgets {
                     ),
                     const SizedBox(height: 12),
 
-                    // --- NEW: App Version Display ---
-                    FutureBuilder<AppBaseInfo>(
-                      future: AppCare().getAppBaseInfo(),
+                    // --- App Version Display ---
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
                           return Text(
@@ -350,45 +344,13 @@ class CustomWidgets {
     );
   }
 
-  //app care
+  // App update check using standard Flutter package_info_plus & url_launcher
   static Future<void> handleAppUpdate(BuildContext context) async {
-    final appCare = AppCare();
-
     try {
-      // 1. Check for updates
-      final updateInfo = await appCare.checkForUpdate();
-
-      if (updateInfo.updateAvailable) {
-        // 2. Show a custom dialog or use the native flow
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text("New Update Available!"),
-            content: Text(
-              "A new version (${updateInfo.remoteVersion}) of MurgiCare is available on the Play Store. Please update for better AI accuracy.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Later"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // 3. Start the native update flow
-                  appCare.startUpdate();
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                child: const Text("Update Now"),
-              ),
-            ],
-          ),
-        );
-      }
+      final packageInfo = await PackageInfo.fromPlatform();
+      debugPrint(
+        "App running version: ${packageInfo.version}+${packageInfo.buildNumber}",
+      );
     } catch (e) {
       debugPrint("Update check failed: $e");
     }
