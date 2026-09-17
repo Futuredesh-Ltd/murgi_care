@@ -12,7 +12,8 @@ class BreederMonitorScreen extends ConsumerStatefulWidget {
   const BreederMonitorScreen({super.key, required this.isEnglish});
 
   @override
-  ConsumerState<BreederMonitorScreen> createState() => _BreederMonitorScreenState();
+  ConsumerState<BreederMonitorScreen> createState() =>
+      _BreederMonitorScreenState();
 }
 
 class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
@@ -35,13 +36,17 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
     final selectedFlock = state.selectedFlock;
 
     // Latest Log
-    final LocalBreederLog? latestLog = state.logs.isNotEmpty ? state.logs.last : null;
+    final LocalBreederLog? latestLog = state.logs.isNotEmpty
+        ? state.logs.last
+        : null;
 
     // Active Week & Days
     int activeWeeks = 4;
     int activeDays = 0;
     if (selectedFlock != null) {
-      final totalDays = DateTime.now().difference(selectedFlock.startDate).inDays;
+      final totalDays = DateTime.now()
+          .difference(selectedFlock.startDate)
+          .inDays;
       activeWeeks = (totalDays / 7).floor() + 1;
       if (activeWeeks < 1) activeWeeks = 1;
       activeDays = totalDays % 7;
@@ -51,7 +56,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
     final maleTarget = getBreederMaleTargetWeight(activeWeeks);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -91,7 +98,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                           : "ওজন, গ্রোথ স্টেজ এবং ইউনিফরমিটি স্মার্ট সতর্কতার সাথে ট্র্যাক করুন",
                       style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                        color: isDark
+                            ? Colors.white60
+                            : const Color(0xFF64748B),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -112,7 +121,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                         ),
                       ],
                       border: Border.all(
-                        color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? Colors.white12
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -123,32 +134,48 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF334155),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF334155),
                           ),
                         ),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<LocalFlock>(
-                          initialValue: state.flocks.any((f) => f.id == selectedFlock?.id)
+                          initialValue:
+                              state.flocks.any((f) => f.id == selectedFlock?.id)
                               ? selectedFlock
-                              : (state.flocks.isNotEmpty ? state.flocks.first : null),
+                              : (state.flocks.isNotEmpty
+                                    ? state.flocks.first
+                                    : null),
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                                color: isDark
+                                    ? Colors.white24
+                                    : const Color(0xFFCBD5E1),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                                color: isDark
+                                    ? Colors.white24
+                                    : const Color(0xFFCBD5E1),
                               ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                           ),
                           hint: Text(
                             isEng ? "Choose a flock" : "একটি ফ্লক বাছাই করুন",
-                            style: TextStyle(color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white38
+                                  : const Color(0xFF94A3B8),
+                            ),
                           ),
                           items: state.flocks
                               .map(
@@ -157,7 +184,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                                   child: Text(
                                     "${f.name} (${f.birdType})",
                                     style: TextStyle(
-                                      color: isDark ? Colors.white : Colors.black87,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
                                       fontSize: 14,
                                     ),
                                   ),
@@ -189,7 +218,10 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                     ),
                     child: Text(
                       isEng ? "+ Add Flock" : "+ ফ্লক যোগ করুন",
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -199,7 +231,11 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                       if (selectedFlock == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(isEng ? "Please add or select a flock first!" : "অনুগ্রহ করে আগে একটি ফ্লক তৈরি করুন বা নির্বাচন করুন!"),
+                            content: Text(
+                              isEng
+                                  ? "Please add or select a flock first!"
+                                  : "অনুগ্রহ করে আগে একটি ফ্লক তৈরি করুন বা নির্বাচন করুন!",
+                            ),
                           ),
                         );
                         return;
@@ -225,7 +261,10 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                     ),
                     child: Text(
                       isEng ? "+ Weekly Input" : "+ সাপ্তাহিক তথ্য ইনপুট",
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -234,23 +273,37 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   _buildAccordionHeader(
                     title: isEng ? "Flock Summary" : "ফ্লকের সারসংক্ষেপ",
                     isExpanded: _summaryExpanded,
-                    onTap: () => setState(() => _summaryExpanded = !_summaryExpanded),
+                    onTap: () =>
+                        setState(() => _summaryExpanded = !_summaryExpanded),
                   ),
                   if (_summaryExpanded) ...[
                     const SizedBox(height: 6),
-                    _buildSummaryCard(context, selectedFlock, activeWeeks, activeDays),
+                    _buildSummaryCard(
+                      context,
+                      selectedFlock,
+                      activeWeeks,
+                      activeDays,
+                    ),
                   ],
                   const SizedBox(height: 14),
 
                   // 2. Accordion: Male and Female Bodyweight Status
                   _buildAccordionHeader(
-                    title: isEng ? "Male and Female Bodyweight Status" : "নর ও মাদী মুরগির শারীরিক ওজনের অবস্থা",
+                    title: isEng
+                        ? "Male and Female Bodyweight Status"
+                        : "নর ও মাদী মুরগির শারীরিক ওজনের অবস্থা",
                     isExpanded: _statusExpanded,
-                    onTap: () => setState(() => _statusExpanded = !_statusExpanded),
+                    onTap: () =>
+                        setState(() => _statusExpanded = !_statusExpanded),
                   ),
                   if (_statusExpanded) ...[
                     const SizedBox(height: 6),
-                    _buildBodyweightStatusCards(context, latestLog, femaleTarget, maleTarget),
+                    _buildBodyweightStatusCards(
+                      context,
+                      latestLog,
+                      femaleTarget,
+                      maleTarget,
+                    ),
                   ],
                   const SizedBox(height: 14),
 
@@ -268,13 +321,22 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
 
                   // 4. Accordion: Management Action
                   _buildAccordionHeader(
-                    title: isEng ? "Management Action" : "ব্যবস্থাপনা পদক্ষেপ ও পরামর্শ",
+                    title: isEng
+                        ? "Management Action"
+                        : "ব্যবস্থাপনা পদক্ষেপ ও পরামর্শ",
                     isExpanded: _managementExpanded,
-                    onTap: () => setState(() => _managementExpanded = !_managementExpanded),
+                    onTap: () => setState(
+                      () => _managementExpanded = !_managementExpanded,
+                    ),
                   ),
                   if (_managementExpanded) ...[
                     const SizedBox(height: 6),
-                    _buildManagementCard(context, latestLog, femaleTarget, maleTarget),
+                    _buildManagementCard(
+                      context,
+                      latestLog,
+                      femaleTarget,
+                      maleTarget,
+                    ),
                   ],
                   const SizedBox(height: 14),
 
@@ -282,11 +344,17 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   _buildAccordionHeader(
                     title: isEng ? "Alert" : "সতর্কবার্তা ও অ্যালার্ট",
                     isExpanded: _alertExpanded,
-                    onTap: () => setState(() => _alertExpanded = !_alertExpanded),
+                    onTap: () =>
+                        setState(() => _alertExpanded = !_alertExpanded),
                   ),
                   if (_alertExpanded) ...[
                     const SizedBox(height: 6),
-                    _buildAlertCard(context, latestLog, femaleTarget, maleTarget),
+                    _buildAlertCard(
+                      context,
+                      latestLog,
+                      femaleTarget,
+                      maleTarget,
+                    ),
                   ],
                   const SizedBox(height: 14),
 
@@ -294,7 +362,8 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   _buildAccordionHeader(
                     title: isEng ? "Weekly History" : "সাপ্তাহিক হিস্ট্রি",
                     isExpanded: _historyExpanded,
-                    onTap: () => setState(() => _historyExpanded = !_historyExpanded),
+                    onTap: () =>
+                        setState(() => _historyExpanded = !_historyExpanded),
                   ),
                   if (_historyExpanded) ...[
                     const SizedBox(height: 6),
@@ -306,7 +375,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   _buildAccordionHeader(
                     title: isEng ? "Weight Graph" : "শারীরিক ওজনের গ্রাফ",
                     isExpanded: _weightGraphExpanded,
-                    onTap: () => setState(() => _weightGraphExpanded = !_weightGraphExpanded),
+                    onTap: () => setState(
+                      () => _weightGraphExpanded = !_weightGraphExpanded,
+                    ),
                   ),
                   if (_weightGraphExpanded) ...[
                     const SizedBox(height: 6),
@@ -318,7 +389,10 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   _buildAccordionHeader(
                     title: isEng ? "Uniformity Graph" : "ইউনিফরমিটি গ্রাফ",
                     isExpanded: _uniformityGraphExpanded,
-                    onTap: () => setState(() => _uniformityGraphExpanded = !_uniformityGraphExpanded),
+                    onTap: () => setState(
+                      () =>
+                          _uniformityGraphExpanded = !_uniformityGraphExpanded,
+                    ),
                   ),
                   if (_uniformityGraphExpanded) ...[
                     const SizedBox(height: 6),
@@ -376,7 +450,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
   }
 
   // --- 1. FLOCK SUMMARY CARD ---
-  Widget _buildSummaryCard(BuildContext context, LocalFlock? flock, int weeks, int days) {
+  Widget _buildSummaryCard(
+    BuildContext context,
+    LocalFlock? flock,
+    int weeks,
+    int days,
+  ) {
     final isEng = widget.isEnglish;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -410,10 +489,14 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isEng ? "Create or select a breeder flock." : "একটি নতুন ব্রিডার ফ্লক তৈরি করুন অথবা নির্বাচন করুন।",
+                  isEng
+                      ? "Create or select a breeder flock."
+                      : "একটি নতুন ব্রিডার ফ্লক তৈরি করুন অথবা নির্বাচন করুন।",
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xFF64748B),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : const Color(0xFF64748B),
                   ),
                 ),
               ],
@@ -423,7 +506,10 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
               children: [
                 _summaryRow("Flock", flock.name),
                 const SizedBox(height: 6),
-                _summaryRow("Type", flock.birdType.isEmpty ? "LAYER_BREEDER" : flock.birdType),
+                _summaryRow(
+                  "Type",
+                  flock.birdType.isEmpty ? "LAYER_BREEDER" : flock.birdType,
+                ),
                 const SizedBox(height: 6),
                 _summaryRow("Age", "$weeks week $days day"),
                 const SizedBox(height: 6),
@@ -498,11 +584,28 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              _statusDetailRow("Target:", log == null ? "--" : "${femaleTarget.toStringAsFixed(1)} g"),
-              _statusDetailRow("Actual:", log == null ? "--" : "${femaleActual.toStringAsFixed(1)} g"),
-              _statusDetailRow("Status:", log == null ? "--" : _getWeightStatusString(femaleActual, femaleTarget)),
-              _statusDetailRow("Uniformity:", log == null ? "--" : "${femaleUni.toStringAsFixed(1)}%"),
-              _statusDetailRow("Uni Status:", log == null ? "--" : _getUniformityStatusString(femaleUni)),
+              _statusDetailRow(
+                "Target:",
+                log == null ? "--" : "${femaleTarget.toStringAsFixed(1)} g",
+              ),
+              _statusDetailRow(
+                "Actual:",
+                log == null ? "--" : "${femaleActual.toStringAsFixed(1)} g",
+              ),
+              _statusDetailRow(
+                "Status:",
+                log == null
+                    ? "--"
+                    : _getWeightStatusString(femaleActual, femaleTarget),
+              ),
+              _statusDetailRow(
+                "Uniformity:",
+                log == null ? "--" : "${femaleUni.toStringAsFixed(1)}%",
+              ),
+              _statusDetailRow(
+                "Uni Status:",
+                log == null ? "--" : _getUniformityStatusString(femaleUni),
+              ),
             ],
           ),
         ),
@@ -531,11 +634,28 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              _statusDetailRow("Target:", log == null ? "--" : "${maleTarget.toStringAsFixed(1)} g"),
-              _statusDetailRow("Actual:", log == null ? "--" : "${maleActual.toStringAsFixed(1)} g"),
-              _statusDetailRow("Status:", log == null ? "--" : _getWeightStatusString(maleActual, maleTarget)),
-              _statusDetailRow("Uniformity:", log == null ? "--" : "${maleUni.toStringAsFixed(1)}%"),
-              _statusDetailRow("Uni Status:", log == null ? "--" : _getUniformityStatusString(maleUni)),
+              _statusDetailRow(
+                "Target:",
+                log == null ? "--" : "${maleTarget.toStringAsFixed(1)} g",
+              ),
+              _statusDetailRow(
+                "Actual:",
+                log == null ? "--" : "${maleActual.toStringAsFixed(1)} g",
+              ),
+              _statusDetailRow(
+                "Status:",
+                log == null
+                    ? "--"
+                    : _getWeightStatusString(maleActual, maleTarget),
+              ),
+              _statusDetailRow(
+                "Uniformity:",
+                log == null ? "--" : "${maleUni.toStringAsFixed(1)}%",
+              ),
+              _statusDetailRow(
+                "Uni Status:",
+                log == null ? "--" : _getUniformityStatusString(maleUni),
+              ),
             ],
           ),
         ),
@@ -603,14 +723,18 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Text(
         phaseText,
         style: TextStyle(
           fontSize: 13,
           height: 1.4,
-          color: isDark ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF334155),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.8)
+              : const Color(0xFF334155),
         ),
       ),
     );
@@ -628,19 +752,39 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
 
     List<String> actions = [];
     if (log == null) {
-      actions.add(isEng ? "Log weekly data to view management recommendations." : "ব্যবস্থাপনা পরামর্শ দেখতে সাপ্তাহিক তথ্য সংরক্ষণ করুন।");
+      actions.add(
+        isEng
+            ? "Log weekly data to view management recommendations."
+            : "ব্যবস্থাপনা পরামর্শ দেখতে সাপ্তাহিক তথ্য সংরক্ষণ করুন।",
+      );
     } else {
       if (log.femaleUniformityPercent < 80) {
-        actions.add(isEng ? "Grade female flock into 3 weight groups (light, medium, heavy) and adjust feeding." : "মাদী মুরগিকে ৩টি গ্রেডে ভাগ করে প্রয়োজনীয় ফিড সামঞ্জস্য করুন।");
+        actions.add(
+          isEng
+              ? "Grade female flock into 3 weight groups (light, medium, heavy) and adjust feeding."
+              : "মাদী মুরগিকে ৩টি গ্রেডে ভাগ করে প্রয়োজনীয় ফিড সামঞ্জস্য করুন।",
+        );
       }
       if (log.maleUniformityPercent < 80) {
-        actions.add(isEng ? "Check male feeding space and separate underweight males for target feeding." : "নর মুরগির ফিডার স্পেস নিশ্চিত করুন এবং আন্ডারওয়েটদের আলাদা করুন।");
+        actions.add(
+          isEng
+              ? "Check male feeding space and separate underweight males for target feeding."
+              : "নর মুরগির ফিডার স্পেস নিশ্চিত করুন এবং আন্ডারওয়েটদের আলাদা করুন।",
+        );
       }
       if (log.femaleWeightGrams < femaleTarget * 0.95) {
-        actions.add(isEng ? "Increase female daily feed allowance by +2g to +3g per bird." : "মাদী মুরগির দৈনিক খাবার ২-৩ গ্রাম বৃদ্ধি করুন।");
+        actions.add(
+          isEng
+              ? "Increase female daily feed allowance by +2g to +3g per bird."
+              : "মাদী মুরগির দৈনিক খাবার ২-৩ গ্রাম বৃদ্ধি করুন।",
+        );
       }
       if (actions.isEmpty) {
-        actions.add(isEng ? "Maintain current feeding schedule and light program." : "বর্তমান ফিডিং সিডিউল এবং লাইটিং প্রোগ্রাম বজায় রাখুন।");
+        actions.add(
+          isEng
+              ? "Maintain current feeding schedule and light program."
+              : "বর্তমান ফিডিং সিডিউল এবং লাইটিং প্রোগ্রাম বজায় রাখুন।",
+        );
       }
     }
 
@@ -650,7 +794,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,13 +807,18 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("• ", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      "• ",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     Expanded(
                       child: Text(
                         a,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF334155),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ),
@@ -696,12 +847,16 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
         alerts.add("Female uniformity low. Grade flock and adjust feeding.");
       }
       if (log.maleUniformityPercent < 80) {
-        alerts.add("Male uniformity low. Check male grading and feed distribution.");
+        alerts.add(
+          "Male uniformity low. Check male grading and feed distribution.",
+        );
       }
-      if (log.femaleWeightGrams == 0.0 || log.femaleWeightGrams < femaleTarget * 0.85) {
+      if (log.femaleWeightGrams == 0.0 ||
+          log.femaleWeightGrams < femaleTarget * 0.85) {
         alerts.add("Female weight Critical Underweight.");
       }
-      if (log.maleWeightGrams == 0.0 || log.maleWeightGrams < maleTarget * 0.85) {
+      if (log.maleWeightGrams == 0.0 ||
+          log.maleWeightGrams < maleTarget * 0.85) {
         alerts.add("Male weight Critical Underweight.");
       }
     }
@@ -722,7 +877,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFFFFB74D) : const Color(0xFF8D6E63),
+                color: isDark
+                    ? const Color(0xFFFFB74D)
+                    : const Color(0xFF8D6E63),
               ),
             )
           : Column(
@@ -736,7 +893,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFFFB74D) : const Color(0xFF795548),
+                          color: isDark
+                              ? const Color(0xFFFFB74D)
+                              : const Color(0xFF795548),
                         ),
                       ),
                     ),
@@ -762,12 +921,20 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+          border: Border.all(
+            color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+          ),
         ),
         child: Center(
           child: Text(
-            isEng ? "No weekly logs added yet." : "এখনও কোনো তথ্য যোগ করা হয়নি।",
-            style: TextStyle(color: isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xFF94A3B8)),
+            isEng
+                ? "No weekly logs added yet."
+                : "এখনও কোনো তথ্য যোগ করা হয়নি।",
+            style: TextStyle(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.5)
+                  : const Color(0xFF94A3B8),
+            ),
           ),
         ),
       );
@@ -788,7 +955,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                 offset: const Offset(0, 2),
               ),
             ],
-            border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -819,14 +988,20 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
-                        color: isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xFF64748B),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : const Color(0xFF64748B),
                       ),
                     ),
                   ],
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Colors.grey,
+                ),
                 onPressed: () => notifier.deleteLog(l.id),
               ),
             ],
@@ -837,7 +1012,10 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
   }
 
   // --- 7. WEIGHT GRAPH CARD ---
-  Widget _buildWeightGraphCard(BuildContext context, List<LocalBreederLog> logs) {
+  Widget _buildWeightGraphCard(
+    BuildContext context,
+    List<LocalBreederLog> logs,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -847,7 +1025,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -856,7 +1036,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.isEnglish ? "Weight Progress (g)" : "শারীরিক ওজন (গ্রাম)",
+                widget.isEnglish
+                    ? "Weight Progress (g)"
+                    : "শারীরিক ওজন (গ্রাম)",
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -865,9 +1047,15 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
               ),
               Row(
                 children: [
-                  _buildLegendIndicator(color: const Color(0xFFE91E63), label: widget.isEnglish ? "Female" : "মাদি"),
+                  _buildLegendIndicator(
+                    color: const Color(0xFFE91E63),
+                    label: widget.isEnglish ? "Female" : "মাদি",
+                  ),
                   const SizedBox(width: 8),
-                  _buildLegendIndicator(color: const Color(0xFF2196F3), label: widget.isEnglish ? "Male" : "মোরগ"),
+                  _buildLegendIndicator(
+                    color: const Color(0xFF2196F3),
+                    label: widget.isEnglish ? "Male" : "মোরগ",
+                  ),
                 ],
               ),
             ],
@@ -877,8 +1065,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
             child: logs.isEmpty
                 ? Center(
                     child: Text(
-                      widget.isEnglish ? "No weight data recorded yet" : "কোন তথ্য নেই",
-                      style: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+                      widget.isEnglish
+                          ? "No weight data recorded yet"
+                          : "কোন তথ্য নেই",
+                      style: TextStyle(
+                        color: isDark ? Colors.white38 : Colors.black38,
+                      ),
                     ),
                   )
                 : LineChart(
@@ -895,8 +1087,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                         ),
                       ),
                       titlesData: FlTitlesData(
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
@@ -905,12 +1101,14 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                             getTitlesWidget: (val, meta) {
                               if (val % 1 != 0) return const SizedBox.shrink();
                               return SideTitleWidget(
-                                axisSide: meta.axisSide,
+                                meta: meta,
                                 child: Text(
                                   'W${val.toInt()}',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : Colors.grey.shade600,
                                   ),
                                 ),
                               );
@@ -921,15 +1119,28 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                       borderData: FlBorderData(
                         show: true,
                         border: Border(
-                          left: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
-                          bottom: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
+                          left: BorderSide(
+                            color: isDark
+                                ? Colors.white24
+                                : Colors.grey.shade400,
+                          ),
+                          bottom: BorderSide(
+                            color: isDark
+                                ? Colors.white24
+                                : Colors.grey.shade400,
+                          ),
                         ),
                       ),
                       lineBarsData: [
                         // Female Line
                         LineChartBarData(
                           spots: logs
-                              .map((l) => FlSpot(l.weekNumber.toDouble(), l.femaleWeightGrams))
+                              .map(
+                                (l) => FlSpot(
+                                  l.weekNumber.toDouble(),
+                                  l.femaleWeightGrams,
+                                ),
+                              )
                               .toList(),
                           isCurved: false,
                           color: const Color(0xFFE91E63),
@@ -939,7 +1150,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                         // Male Line
                         LineChartBarData(
                           spots: logs
-                              .map((l) => FlSpot(l.weekNumber.toDouble(), l.maleWeightGrams))
+                              .map(
+                                (l) => FlSpot(
+                                  l.weekNumber.toDouble(),
+                                  l.maleWeightGrams,
+                                ),
+                              )
                               .toList(),
                           isCurved: false,
                           color: const Color(0xFF2196F3),
@@ -975,7 +1191,10 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
   }
 
   // --- 8. UNIFORMITY GRAPH CARD ---
-  Widget _buildUniformityGraphCard(BuildContext context, List<LocalBreederLog> logs) {
+  Widget _buildUniformityGraphCard(
+    BuildContext context,
+    List<LocalBreederLog> logs,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -985,7 +1204,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1015,8 +1236,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   ),
                 ),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -1025,12 +1250,14 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                       getTitlesWidget: (val, meta) {
                         if (val % 1 != 0) return const SizedBox.shrink();
                         return SideTitleWidget(
-                          axisSide: meta.axisSide,
+                          meta: meta,
                           child: Text(
                             'W${val.toInt()}',
                             style: TextStyle(
                               fontSize: 10,
-                              color: isDark ? Colors.white54 : Colors.grey.shade600,
+                              color: isDark
+                                  ? Colors.white54
+                                  : Colors.grey.shade600,
                             ),
                           ),
                         );
@@ -1075,8 +1302,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                 borderData: FlBorderData(
                   show: true,
                   border: Border(
-                    left: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
-                    bottom: BorderSide(color: isDark ? Colors.white24 : Colors.grey.shade400),
+                    left: BorderSide(
+                      color: isDark ? Colors.white24 : Colors.grey.shade400,
+                    ),
+                    bottom: BorderSide(
+                      color: isDark ? Colors.white24 : Colors.grey.shade400,
+                    ),
                   ),
                 ),
                 lineBarsData: logs.isEmpty
@@ -1084,7 +1315,12 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                     : [
                         LineChartBarData(
                           spots: logs
-                              .map((l) => FlSpot(l.weekNumber.toDouble(), l.femaleUniformityPercent))
+                              .map(
+                                (l) => FlSpot(
+                                  l.weekNumber.toDouble(),
+                                  l.femaleUniformityPercent,
+                                ),
+                              )
                               .toList(),
                           isCurved: false,
                           color: Colors.teal,
@@ -1117,16 +1353,29 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: InputDecoration(labelText: isEng ? "Flock Name" : "ফ্লকের নাম"),
+                decoration: InputDecoration(
+                  labelText: isEng ? "Flock Name" : "ফ্লকের নাম",
+                ),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 initialValue: typeCtrl.text,
-                decoration: InputDecoration(labelText: isEng ? "Breeder Type" : "ব্রিডার টাইপ"),
+                decoration: InputDecoration(
+                  labelText: isEng ? "Breeder Type" : "ব্রিডার টাইপ",
+                ),
                 items: const [
-                  DropdownMenuItem(value: "LAYER_BREEDER", child: Text("LAYER_BREEDER")),
-                  DropdownMenuItem(value: "BROILER_BREEDER", child: Text("BROILER_BREEDER")),
-                  DropdownMenuItem(value: "SONALI_BREEDER", child: Text("SONALI_BREEDER")),
+                  DropdownMenuItem(
+                    value: "LAYER_BREEDER",
+                    child: Text("LAYER_BREEDER"),
+                  ),
+                  DropdownMenuItem(
+                    value: "BROILER_BREEDER",
+                    child: Text("BROILER_BREEDER"),
+                  ),
+                  DropdownMenuItem(
+                    value: "SONALI_BREEDER",
+                    child: Text("SONALI_BREEDER"),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) typeCtrl.text = val;
@@ -1136,7 +1385,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
               TextField(
                 controller: birdsCtrl,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: isEng ? "Initial Bird Count" : "প্রাথমিক সংখ্যা"),
+                decoration: InputDecoration(
+                  labelText: isEng ? "Initial Bird Count" : "প্রাথমিক সংখ্যা",
+                ),
               ),
             ],
           ),
@@ -1156,7 +1407,9 @@ class _BreederMonitorScreenState extends ConsumerState<BreederMonitorScreen> {
                   birdType: typeCtrl.text,
                   initialBirds: int.tryParse(birdsCtrl.text) ?? 1000,
                   chickCost: 0.0,
-                  startDate: DateTime.now().subtract(const Duration(days: 28)), // defaults to 4 weeks old
+                  startDate: DateTime.now().subtract(
+                    const Duration(days: 28),
+                  ), // defaults to 4 weeks old
                 );
                 ref.read(breederMonitorProvider.notifier).addFlock(newFlock);
                 Navigator.pop(ctx);
