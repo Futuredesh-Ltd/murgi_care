@@ -58,7 +58,7 @@ class GrowthChart extends StatelessWidget {
                           case 3: day = "Day 40"; break;
                         }
                         return SideTitleWidget(
-                          axisSide: meta.axisSide,
+                          meta: meta,
                           child: Text(day, style: const TextStyle(fontSize: 10, color: Colors.grey)),
                         );
                       },
