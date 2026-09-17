@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../model/local_databank_models.dart';
 import '../model/feed_standard_model.dart';
 import '../services/local_databank_service.dart';
@@ -65,7 +66,9 @@ class DataBankHubNotifier extends StateNotifier<DataBankHubState> {
       flockCount: flocks.length,
       formulaCount: formulas.length,
       projectCount: projects.length,
-      lastAuditScore: audits.isNotEmpty ? audits.first.overallScorePercent : 0.0,
+      lastAuditScore: audits.isNotEmpty
+          ? audits.first.overallScorePercent
+          : 0.0,
       isLoading: false,
     );
   }
@@ -75,10 +78,11 @@ class DataBankHubNotifier extends StateNotifier<DataBankHubState> {
   }
 }
 
-final dataBankHubProvider = StateNotifierProvider<DataBankHubNotifier, DataBankHubState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return DataBankHubNotifier(service);
-});
+final dataBankHubProvider =
+    StateNotifierProvider<DataBankHubNotifier, DataBankHubState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return DataBankHubNotifier(service);
+    });
 
 // ============================================================================
 // 2. FLOCK DATA MANAGEMENT PROVIDER
@@ -105,7 +109,9 @@ class FlockManagementState {
   }) {
     return FlockManagementState(
       flocks: flocks ?? this.flocks,
-      selectedFlock: clearSelectedFlock ? null : (selectedFlock ?? this.selectedFlock),
+      selectedFlock: clearSelectedFlock
+          ? null
+          : (selectedFlock ?? this.selectedFlock),
       records: records ?? this.records,
       isLoading: isLoading ?? this.isLoading,
     );
@@ -133,7 +139,11 @@ class FlockManagementNotifier extends StateNotifier<FlockManagementState> {
       sel = null;
     }
 
-    state = state.copyWith(flocks: flocks, selectedFlock: sel, isLoading: false);
+    state = state.copyWith(
+      flocks: flocks,
+      selectedFlock: sel,
+      isLoading: false,
+    );
     if (sel != null) {
       loadRecords(sel.id);
     }
@@ -169,10 +179,11 @@ class FlockManagementNotifier extends StateNotifier<FlockManagementState> {
   }
 }
 
-final flockManagementProvider = StateNotifierProvider<FlockManagementNotifier, FlockManagementState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return FlockManagementNotifier(service);
-});
+final flockManagementProvider =
+    StateNotifierProvider<FlockManagementNotifier, FlockManagementState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return FlockManagementNotifier(service);
+    });
 
 // ============================================================================
 // 3. VACCINATION SCHEDULE PROVIDER
@@ -192,8 +203,8 @@ class VaccineScheduleState {
     this.isLoading = true,
     DateTime? selectedDate,
     DateTime? calendarFocusedMonth,
-  })  : selectedDate = selectedDate ?? DateTime.now(),
-        calendarFocusedMonth = calendarFocusedMonth ?? DateTime.now();
+  }) : selectedDate = selectedDate ?? DateTime.now(),
+       calendarFocusedMonth = calendarFocusedMonth ?? DateTime.now();
 
   VaccineScheduleState copyWith({
     List<LocalFlock>? flocks,
@@ -224,8 +235,13 @@ class VaccineScheduleNotifier extends StateNotifier<VaccineScheduleState> {
   Future<void> loadFlocks() async {
     state = state.copyWith(isLoading: true);
     final flocks = await _service.getFlocks();
-    LocalFlock? sel = state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
-    state = state.copyWith(flocks: flocks, selectedFlock: sel, isLoading: false);
+    LocalFlock? sel =
+        state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
+    state = state.copyWith(
+      flocks: flocks,
+      selectedFlock: sel,
+      isLoading: false,
+    );
     if (sel != null) {
       loadSchedules(sel.id);
     }
@@ -287,13 +303,17 @@ class VaccineScheduleNotifier extends StateNotifier<VaccineScheduleState> {
         targetAgeDays: 1,
         scheduledDate: flock.startDate.add(const Duration(days: 1)),
         status: 'completed',
-        notes: isEng ? "Subcutaneous at hatchery" : "হ্যাচারিতে চামড়ার নিচে ইনজেকশন",
+        notes: isEng
+            ? "Subcutaneous at hatchery"
+            : "হ্যাচারিতে চামড়ার নিচে ইনজেকশন",
       ),
       LocalVaccineSchedule(
         id: "${DateTime.now().millisecondsSinceEpoch}_2",
         flockId: flock.id,
         vaccineName: "ND + IB (Ranikhet & Bronchitis)",
-        diseaseName: isEng ? "Ranikhet & Infectious Bronchitis" : "রাণীকেত ও শ্বাসনালীর প্রদাহ",
+        diseaseName: isEng
+            ? "Ranikhet & Infectious Bronchitis"
+            : "রাণীকেত ও শ্বাসনালীর প্রদাহ",
         targetAgeDays: 5,
         scheduledDate: flock.startDate.add(const Duration(days: 5)),
         status: 'completed',
@@ -317,7 +337,9 @@ class VaccineScheduleNotifier extends StateNotifier<VaccineScheduleState> {
         targetAgeDays: 19,
         scheduledDate: flock.startDate.add(const Duration(days: 19)),
         status: 'pending',
-        notes: isEng ? "Drinking water with skimmed milk" : "ননীহীন দুধ মেশানো পানিতে",
+        notes: isEng
+            ? "Drinking water with skimmed milk"
+            : "ননীহীন দুধ মেশানো পানিতে",
       ),
       LocalVaccineSchedule(
         id: "${DateTime.now().millisecondsSinceEpoch}_5",
@@ -338,10 +360,11 @@ class VaccineScheduleNotifier extends StateNotifier<VaccineScheduleState> {
   }
 }
 
-final vaccineScheduleProvider = StateNotifierProvider<VaccineScheduleNotifier, VaccineScheduleState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return VaccineScheduleNotifier(service);
-});
+final vaccineScheduleProvider =
+    StateNotifierProvider<VaccineScheduleNotifier, VaccineScheduleState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return VaccineScheduleNotifier(service);
+    });
 
 // ============================================================================
 // 4. LAB REPORT PROVIDER
@@ -384,8 +407,13 @@ class LabReportNotifier extends StateNotifier<LabReportState> {
   Future<void> loadFlocks() async {
     state = state.copyWith(isLoading: true);
     final flocks = await _service.getFlocks();
-    LocalFlock? sel = state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
-    state = state.copyWith(flocks: flocks, selectedFlock: sel, isLoading: false);
+    LocalFlock? sel =
+        state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
+    state = state.copyWith(
+      flocks: flocks,
+      selectedFlock: sel,
+      isLoading: false,
+    );
     if (sel != null) {
       loadReports(sel.id);
     }
@@ -408,9 +436,15 @@ class LabReportNotifier extends StateNotifier<LabReportState> {
     }
   }
 
-  Future<void> addReportWithPhotos(LocalLabReport report, List<File> imageFiles) async {
+  Future<void> addReportWithPhotos(
+    LocalLabReport report,
+    List<File> imageFiles,
+  ) async {
     state = state.copyWith(isLoading: true);
-    await _service.syncLabReportToFirestore(report: report, imageFiles: imageFiles);
+    await _service.syncLabReportToFirestore(
+      report: report,
+      imageFiles: imageFiles,
+    );
     if (state.selectedFlock != null) {
       await loadReports(state.selectedFlock!.id);
     }
@@ -425,10 +459,11 @@ class LabReportNotifier extends StateNotifier<LabReportState> {
   }
 }
 
-final labReportProvider = StateNotifierProvider<LabReportNotifier, LabReportState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return LabReportNotifier(service);
-});
+final labReportProvider =
+    StateNotifierProvider<LabReportNotifier, LabReportState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return LabReportNotifier(service);
+    });
 
 // ============================================================================
 // 5. DISEASE IDENTIFICATION PROVIDER
@@ -474,18 +509,25 @@ class DiseaseIdentificationState {
   }
 }
 
-class DiseaseIdentificationNotifier extends StateNotifier<DiseaseIdentificationState> {
+class DiseaseIdentificationNotifier
+    extends StateNotifier<DiseaseIdentificationState> {
   final LocalDataBankService _service;
 
-  DiseaseIdentificationNotifier(this._service) : super(DiseaseIdentificationState()) {
+  DiseaseIdentificationNotifier(this._service)
+    : super(DiseaseIdentificationState()) {
     loadFlocks();
   }
 
   Future<void> loadFlocks() async {
     state = state.copyWith(isLoading: true);
     final flocks = await _service.getFlocks();
-    LocalFlock? sel = state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
-    state = state.copyWith(flocks: flocks, selectedFlock: sel, isLoading: false);
+    LocalFlock? sel =
+        state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
+    state = state.copyWith(
+      flocks: flocks,
+      selectedFlock: sel,
+      isLoading: false,
+    );
     if (sel != null) {
       loadLogs(sel.id);
     }
@@ -514,7 +556,10 @@ class DiseaseIdentificationNotifier extends StateNotifier<DiseaseIdentificationS
     }
   }
 
-  Future<void> addLogWithPhotos(LocalDiseaseLog log, List<File> imageFiles) async {
+  Future<void> addLogWithPhotos(
+    LocalDiseaseLog log,
+    List<File> imageFiles,
+  ) async {
     state = state.copyWith(isLoading: true);
     await _service.syncDiseaseLogToFirestore(log: log, imageFiles: imageFiles);
     if (state.selectedFlock != null) {
@@ -532,10 +577,13 @@ class DiseaseIdentificationNotifier extends StateNotifier<DiseaseIdentificationS
 }
 
 final diseaseIdentificationProvider =
-    StateNotifierProvider<DiseaseIdentificationNotifier, DiseaseIdentificationState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return DiseaseIdentificationNotifier(service);
-});
+    StateNotifierProvider<
+      DiseaseIdentificationNotifier,
+      DiseaseIdentificationState
+    >((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return DiseaseIdentificationNotifier(service);
+    });
 
 // ============================================================================
 // 6. BREEDER MONITOR PROVIDER
@@ -578,8 +626,13 @@ class BreederMonitorNotifier extends StateNotifier<BreederMonitorState> {
   Future<void> loadFlocks() async {
     state = state.copyWith(isLoading: true);
     final flocks = await _service.getFlocks();
-    LocalFlock? sel = state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
-    state = state.copyWith(flocks: flocks, selectedFlock: sel, isLoading: false);
+    LocalFlock? sel =
+        state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
+    state = state.copyWith(
+      flocks: flocks,
+      selectedFlock: sel,
+      isLoading: false,
+    );
     if (sel != null) {
       loadLogs(sel.id);
     }
@@ -618,7 +671,8 @@ class BreederMonitorNotifier extends StateNotifier<BreederMonitorState> {
   // Instance Target & Stage Helpers
   double getFemaleTargetWeight(int week) => calculateFemaleTargetWeight(week);
   double getMaleTargetWeight(int week) => calculateMaleTargetWeight(week);
-  String getStageName(int week, bool isMale) => calculateStageName(week, isMale);
+  String getStageName(int week, bool isMale) =>
+      calculateStageName(week, isMale);
 
   // Target Body Weight Standards (Grams) by Week
   static double calculateFemaleTargetWeight(int week) {
@@ -655,14 +709,18 @@ class BreederMonitorNotifier extends StateNotifier<BreederMonitorState> {
 }
 
 // Top level helper functions for Breeder Monitor
-double getBreederFemaleTargetWeight(int week) => BreederMonitorNotifier.calculateFemaleTargetWeight(week);
-double getBreederMaleTargetWeight(int week) => BreederMonitorNotifier.calculateMaleTargetWeight(week);
-String getBreederStageName(int week, bool isMale) => BreederMonitorNotifier.calculateStageName(week, isMale);
+double getBreederFemaleTargetWeight(int week) =>
+    BreederMonitorNotifier.calculateFemaleTargetWeight(week);
+double getBreederMaleTargetWeight(int week) =>
+    BreederMonitorNotifier.calculateMaleTargetWeight(week);
+String getBreederStageName(int week, bool isMale) =>
+    BreederMonitorNotifier.calculateStageName(week, isMale);
 
-final breederMonitorProvider = StateNotifierProvider<BreederMonitorNotifier, BreederMonitorState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return BreederMonitorNotifier(service);
-});
+final breederMonitorProvider =
+    StateNotifierProvider<BreederMonitorNotifier, BreederMonitorState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return BreederMonitorNotifier(service);
+    });
 
 // ============================================================================
 // 7. FEED FORMULATION PROVIDER
@@ -676,7 +734,8 @@ class FeedFormulationState {
   final bool isLoading;
   final String searchQuery;
   final String standardsSearchQuery;
-  final int selectedTabIndex; // 0: Select Feed Type, 1: Create Formula, 2: Nutrient Standards, 3: Saved Formulas
+  final int
+  selectedTabIndex; // 0: Select Feed Type, 1: Create Formula, 2: Nutrient Standards, 3: Saved Formulas
 
   FeedFormulationState({
     FeedTypeStandard? selectedFeedType,
@@ -698,8 +757,10 @@ class FeedFormulationState {
     this.searchQuery = '',
     this.standardsSearchQuery = '',
     this.selectedTabIndex = 0,
-  })  : selectedFeedType = selectedFeedType ?? allFeedTypeStandards[11], // Layer / Layer / Pre-Layer
-        allIngredients = allIngredients ?? defaultFeedIngredients;
+  }) : selectedFeedType =
+           selectedFeedType ??
+           allFeedTypeStandards[11], // Layer / Layer / Pre-Layer
+       allIngredients = allIngredients ?? defaultFeedIngredients;
 
   FeedFormulationState copyWith({
     FeedTypeStandard? selectedFeedType,
@@ -914,8 +975,12 @@ class FeedFormulationNotifier extends StateNotifier<FeedFormulationState> {
     if ((currentCP - targetCP).abs() < 0.2) return;
 
     final updated = Map<String, double>.from(state.ingredientWeights);
-    final corn = updated.containsKey('Maize (Yellow Corn)') ? 'Maize (Yellow Corn)' : updated.keys.first;
-    final soy = updated.containsKey('Soybean Meal') ? 'Soybean Meal' : updated.keys.elementAt(1);
+    final corn = updated.containsKey('Maize (Yellow Corn)')
+        ? 'Maize (Yellow Corn)'
+        : updated.keys.first;
+    final soy = updated.containsKey('Soybean Meal')
+        ? 'Soybean Meal'
+        : updated.keys.elementAt(1);
 
     if (currentCP < targetCP) {
       // Increase Soybean Meal (+2kg) and decrease Maize (-2kg)
@@ -947,10 +1012,11 @@ class FeedFormulationNotifier extends StateNotifier<FeedFormulationState> {
   }
 }
 
-final feedFormulationProvider = StateNotifierProvider<FeedFormulationNotifier, FeedFormulationState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return FeedFormulationNotifier(service);
-});
+final feedFormulationProvider =
+    StateNotifierProvider<FeedFormulationNotifier, FeedFormulationState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return FeedFormulationNotifier(service);
+    });
 
 // ============================================================================
 // 8. MOLTING MONITOR PROVIDER
@@ -993,8 +1059,13 @@ class MoltingMonitorNotifier extends StateNotifier<MoltingMonitorState> {
   Future<void> loadFlocks() async {
     state = state.copyWith(isLoading: true);
     final flocks = await _service.getFlocks();
-    LocalFlock? sel = state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
-    state = state.copyWith(flocks: flocks, selectedFlock: sel, isLoading: false);
+    LocalFlock? sel =
+        state.selectedFlock ?? (flocks.isNotEmpty ? flocks.first : null);
+    state = state.copyWith(
+      flocks: flocks,
+      selectedFlock: sel,
+      isLoading: false,
+    );
     if (sel != null) {
       loadRecords(sel.id);
     }
@@ -1025,10 +1096,11 @@ class MoltingMonitorNotifier extends StateNotifier<MoltingMonitorState> {
   }
 }
 
-final moltingMonitorProvider = StateNotifierProvider<MoltingMonitorNotifier, MoltingMonitorState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return MoltingMonitorNotifier(service);
-});
+final moltingMonitorProvider =
+    StateNotifierProvider<MoltingMonitorNotifier, MoltingMonitorState>((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return MoltingMonitorNotifier(service);
+    });
 
 // ============================================================================
 // 9. INVESTMENT CALCULATOR PROVIDER
@@ -1085,10 +1157,12 @@ class InvestmentCalculatorState {
   }
 }
 
-class InvestmentCalculatorNotifier extends StateNotifier<InvestmentCalculatorState> {
+class InvestmentCalculatorNotifier
+    extends StateNotifier<InvestmentCalculatorState> {
   final LocalDataBankService _service;
 
-  InvestmentCalculatorNotifier(this._service) : super(InvestmentCalculatorState()) {
+  InvestmentCalculatorNotifier(this._service)
+    : super(InvestmentCalculatorState()) {
     loadProjects();
   }
 
@@ -1132,10 +1206,13 @@ class InvestmentCalculatorNotifier extends StateNotifier<InvestmentCalculatorSta
 }
 
 final investmentCalculatorProvider =
-    StateNotifierProvider<InvestmentCalculatorNotifier, InvestmentCalculatorState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return InvestmentCalculatorNotifier(service);
-});
+    StateNotifierProvider<
+      InvestmentCalculatorNotifier,
+      InvestmentCalculatorState
+    >((ref) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return InvestmentCalculatorNotifier(service);
+    });
 
 // ============================================================================
 // 10. BIOSECURITY AUDIT PROVIDER
@@ -1213,7 +1290,10 @@ class BiosecurityAuditNotifier extends StateNotifier<BiosecurityAuditState> {
   }
 }
 
-final biosecurityAuditProvider = StateNotifierProvider<BiosecurityAuditNotifier, BiosecurityAuditState>((ref) {
-  final service = ref.watch(localDataBankServiceProvider);
-  return BiosecurityAuditNotifier(service);
-});
+final biosecurityAuditProvider =
+    StateNotifierProvider<BiosecurityAuditNotifier, BiosecurityAuditState>((
+      ref,
+    ) {
+      final service = ref.watch(localDataBankServiceProvider);
+      return BiosecurityAuditNotifier(service);
+    });
