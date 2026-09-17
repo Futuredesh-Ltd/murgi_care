@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'controller.dart';
 import '../model/databank_model.dart';
 
@@ -14,15 +15,9 @@ class NavigationState {
   final int currentIndex;
   final int homeSubTabIndex;
 
-  NavigationState({
-    this.currentIndex = 0,
-    this.homeSubTabIndex = 0,
-  });
+  NavigationState({this.currentIndex = 0, this.homeSubTabIndex = 0});
 
-  NavigationState copyWith({
-    int? currentIndex,
-    int? homeSubTabIndex,
-  }) {
+  NavigationState copyWith({int? currentIndex, int? homeSubTabIndex}) {
     return NavigationState(
       currentIndex: currentIndex ?? this.currentIndex,
       homeSubTabIndex: homeSubTabIndex ?? this.homeSubTabIndex,
@@ -47,18 +42,15 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
 
 final navigationProvider =
     StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
-  return NavigationNotifier();
-});
+      return NavigationNotifier();
+    });
 
 // 3. SearchTab State
 class SearchTabState {
   final String searchQuery;
   final String? selectedCategory;
 
-  SearchTabState({
-    this.searchQuery = '',
-    this.selectedCategory,
-  });
+  SearchTabState({this.searchQuery = '', this.selectedCategory});
 
   SearchTabState copyWith({
     String? searchQuery,
@@ -67,8 +59,9 @@ class SearchTabState {
   }) {
     return SearchTabState(
       searchQuery: searchQuery ?? this.searchQuery,
-      selectedCategory:
-          clearCategory ? null : (selectedCategory ?? this.selectedCategory),
+      selectedCategory: clearCategory
+          ? null
+          : (selectedCategory ?? this.selectedCategory),
     );
   }
 }
@@ -95,8 +88,8 @@ class SearchTabNotifier extends StateNotifier<SearchTabState> {
 
 final searchTabProvider =
     StateNotifierProvider<SearchTabNotifier, SearchTabState>((ref) {
-  return SearchTabNotifier();
-});
+      return SearchTabNotifier();
+    });
 
 // 4. DoctorsTab Search State
 class DoctorsTabNotifier extends StateNotifier<String> {
@@ -107,8 +100,9 @@ class DoctorsTabNotifier extends StateNotifier<String> {
   }
 }
 
-final doctorsTabProvider =
-    StateNotifierProvider<DoctorsTabNotifier, String>((ref) {
+final doctorsTabProvider = StateNotifierProvider<DoctorsTabNotifier, String>((
+  ref,
+) {
   return DoctorsTabNotifier();
 });
 
@@ -117,10 +111,7 @@ class DataBankState {
   final int selectedTabIndex;
   final String? selectedBatch;
 
-  DataBankState({
-    this.selectedTabIndex = 0,
-    this.selectedBatch,
-  });
+  DataBankState({this.selectedTabIndex = 0, this.selectedBatch});
 
   DataBankState copyWith({
     int? selectedTabIndex,
@@ -129,8 +120,7 @@ class DataBankState {
   }) {
     return DataBankState(
       selectedTabIndex: selectedTabIndex ?? this.selectedTabIndex,
-      selectedBatch:
-          clearBatch ? null : (selectedBatch ?? this.selectedBatch),
+      selectedBatch: clearBatch ? null : (selectedBatch ?? this.selectedBatch),
     );
   }
 }
@@ -149,8 +139,8 @@ class DataBankNotifier extends StateNotifier<DataBankState> {
 
 final dataBankTabProvider =
     StateNotifierProvider<DataBankNotifier, DataBankState>((ref) {
-  return DataBankNotifier();
-});
+      return DataBankNotifier();
+    });
 
 // 6. Poultry Diseases Search State
 class PoultryDiseasesSearchNotifier extends StateNotifier<String> {
@@ -163,8 +153,8 @@ class PoultryDiseasesSearchNotifier extends StateNotifier<String> {
 
 final poultryDiseasesSearchProvider =
     StateNotifierProvider<PoultryDiseasesSearchNotifier, String>((ref) {
-  return PoultryDiseasesSearchNotifier();
-});
+      return PoultryDiseasesSearchNotifier();
+    });
 
 // 7. Production Cost State
 class ProductionCostState {
@@ -213,7 +203,13 @@ class ProductionCostNotifier extends StateNotifier<ProductionCostState> {
     required double sellPricePerKg,
   }) {
     final totalChicks = birds * chickPrice;
-    final totalCost = totalChicks + feedTotal + medTotal + laborTotal + electTotal + otherTotal;
+    final totalCost =
+        totalChicks +
+        feedTotal +
+        medTotal +
+        laborTotal +
+        electTotal +
+        otherTotal;
     final costPerBird = birds > 0 ? totalCost / birds : 0.0;
     final totalWeightKg = birds * 1.6;
     final expectedRevenue = totalWeightKg * sellPricePerKg;
@@ -231,18 +227,15 @@ class ProductionCostNotifier extends StateNotifier<ProductionCostState> {
 
 final productionCostProvider =
     StateNotifierProvider<ProductionCostNotifier, ProductionCostState>((ref) {
-  return ProductionCostNotifier();
-});
+      return ProductionCostNotifier();
+    });
 
 // 8. Detection Tab State
 class DetectionTabState {
   final bool showResults;
   final int? selectedPhotoIndex;
 
-  DetectionTabState({
-    this.showResults = false,
-    this.selectedPhotoIndex,
-  });
+  DetectionTabState({this.showResults = false, this.selectedPhotoIndex});
 
   DetectionTabState copyWith({
     bool? showResults,
@@ -251,8 +244,9 @@ class DetectionTabState {
   }) {
     return DetectionTabState(
       showResults: showResults ?? this.showResults,
-      selectedPhotoIndex:
-          clearPhotoIndex ? null : (selectedPhotoIndex ?? this.selectedPhotoIndex),
+      selectedPhotoIndex: clearPhotoIndex
+          ? null
+          : (selectedPhotoIndex ?? this.selectedPhotoIndex),
     );
   }
 }
@@ -279,8 +273,8 @@ class DetectionTabNotifier extends StateNotifier<DetectionTabState> {
 
 final detectionTabProvider =
     StateNotifierProvider<DetectionTabNotifier, DetectionTabState>((ref) {
-  return DetectionTabNotifier();
-});
+      return DetectionTabNotifier();
+    });
 
 // 9. Camera Scan State
 class CameraScanState {
@@ -341,8 +335,8 @@ class CameraScanNotifier extends StateNotifier<CameraScanState> {
 
 final cameraScanProvider =
     StateNotifierProvider<CameraScanNotifier, CameraScanState>((ref) {
-  return CameraScanNotifier();
-});
+      return CameraScanNotifier();
+    });
 
 // 10. Admin Dashboard State
 class AdminDashboardState {
@@ -350,7 +344,11 @@ class AdminDashboardState {
   final bool isLoaded;
   final int tick;
 
-  AdminDashboardState({this.isSaving = false, this.isLoaded = false, this.tick = 0});
+  AdminDashboardState({
+    this.isSaving = false,
+    this.isLoaded = false,
+    this.tick = 0,
+  });
 
   AdminDashboardState copyWith({bool? isSaving, bool? isLoaded, int? tick}) {
     return AdminDashboardState(
@@ -379,23 +377,17 @@ class AdminDashboardNotifier extends StateNotifier<AdminDashboardState> {
 
 final adminDashboardProvider =
     StateNotifierProvider<AdminDashboardNotifier, AdminDashboardState>((ref) {
-  return AdminDashboardNotifier();
-});
+      return AdminDashboardNotifier();
+    });
 
 // 11. Home Market Filter State
 class HomeMarketFilterState {
   final String category;
   final String subCategory;
 
-  HomeMarketFilterState({
-    this.category = 'all',
-    this.subCategory = 'all',
-  });
+  HomeMarketFilterState({this.category = 'all', this.subCategory = 'all'});
 
-  HomeMarketFilterState copyWith({
-    String? category,
-    String? subCategory,
-  }) {
+  HomeMarketFilterState copyWith({String? category, String? subCategory}) {
     return HomeMarketFilterState(
       category: category ?? this.category,
       subCategory: subCategory ?? this.subCategory,
@@ -416,9 +408,11 @@ class HomeMarketFilterNotifier extends StateNotifier<HomeMarketFilterState> {
 }
 
 final homeMarketFilterProvider =
-    StateNotifierProvider<HomeMarketFilterNotifier, HomeMarketFilterState>((ref) {
-  return HomeMarketFilterNotifier();
-});
+    StateNotifierProvider<HomeMarketFilterNotifier, HomeMarketFilterState>((
+      ref,
+    ) {
+      return HomeMarketFilterNotifier();
+    });
 
 // 12. DataBank Farm & Batch State
 final databankFarmProvider = StateProvider<Farm?>((ref) => null);
@@ -429,6 +423,3 @@ final currentTimeProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
   yield DateTime.now();
   yield* Stream.periodic(const Duration(seconds: 30), (_) => DateTime.now());
 });
-
-
-
