@@ -30,7 +30,9 @@ class DiseaseProvider extends ChangeNotifier {
 
   bool _loading = false;
   Interpreter? interpreter;
+  Interpreter? breedInterpreter;
   List<String>? _labels;
+  List<String>? _breedLabels;
   bool _isEnglish = false;
   ThemeMode _themeMode = ThemeMode.system;
 
@@ -48,6 +50,8 @@ class DiseaseProvider extends ChangeNotifier {
   bool get loading => _loading;
   MultiAnalysisResult? get multiResult => _multiResult;
   bool get isMultiMode => _images.isNotEmpty;
+  Interpreter? get currentBreedInterpreter => breedInterpreter;
+  List<String>? get breedLabels => _breedLabels;
 
   DiseaseProvider() {
     _loadPreferences();
@@ -78,7 +82,17 @@ class DiseaseProvider extends ChangeNotifier {
       final labelData = await rootBundle.loadString('assets/labels.txt');
       _labels = labelData.split('\n').where((s) => s.isNotEmpty).toList();
     } catch (e) {
-      debugPrint("Error loading model: $e");
+      debugPrint("Error loading disease model: $e");
+    }
+
+    try {
+      breedInterpreter = await Interpreter.fromAsset('assets/breed.tflite');
+      final breedLabelData =
+          await rootBundle.loadString('assets/breed_labels.txt');
+      _breedLabels =
+          breedLabelData.split('\n').where((s) => s.isNotEmpty).toList();
+    } catch (e) {
+      debugPrint("Error loading breed model: $e");
     }
   }
 
@@ -231,7 +245,7 @@ class DiseaseProvider extends ChangeNotifier {
 
   Future<void> _processImagesParallel(List<File> files) async {
     try {
-      if (interpreter == null) await _loadModel();
+      if (interpreter == null || breedInterpreter == null) await _loadModel();
 
       // Run all inferences in parallel using Future.wait
       final List<Map<String, dynamic>> rawResults = await Future.wait(
@@ -248,7 +262,7 @@ class DiseaseProvider extends ChangeNotifier {
     }
   }
 
-  /// Runs TFLite inference on a single file, returns label + confidence.
+  /// Runs TFLite inference on a single file, returns label + confidence for both disease & breed.
   Future<Map<String, dynamic>> _runInference(File file) async {
     final imageData = await file.readAsBytes();
     img.Image? originalImage = img.decodeImage(imageData);
@@ -271,21 +285,62 @@ class DiseaseProvider extends ChangeNotifier {
       }
     }
 
-    var output =
-        List.filled(1 * _labels!.length, 0.0).reshape([1, _labels!.length]);
-    interpreter!.run(input.reshape([1, 224, 224, 3]), output);
+    final reshapedInput = input.reshape([1, 224, 224, 3]);
 
-    List<double> probs = List<double>.from(output[0]);
-    int bestIndex = 0;
-    double maxProb = -1.0;
-    for (int i = 0; i < probs.length; i++) {
-      if (probs[i] > maxProb) {
-        maxProb = probs[i];
-        bestIndex = i;
+    // 1. Disease inference
+    String diseaseLabel = 'others';
+    double diseaseConfidence = 0.0;
+    if (interpreter != null && _labels != null && _labels!.isNotEmpty) {
+      var output =
+          List.filled(1 * _labels!.length, 0.0).reshape([1, _labels!.length]);
+      interpreter!.run(reshapedInput, output);
+
+      List<double> probs = List<double>.from(output[0]);
+      int bestIndex = 0;
+      double maxProb = -1.0;
+      for (int i = 0; i < probs.length; i++) {
+        if (probs[i] > maxProb) {
+          maxProb = probs[i];
+          bestIndex = i;
+        }
+      }
+      diseaseLabel = _labels![bestIndex];
+      diseaseConfidence = maxProb;
+    }
+
+    // 2. Breed inference
+    String? breedLabel;
+    double? breedConfidence;
+    if (breedInterpreter != null &&
+        _breedLabels != null &&
+        _breedLabels!.isNotEmpty) {
+      try {
+        var breedOutput = List.filled(1 * _breedLabels!.length, 0.0)
+            .reshape([1, _breedLabels!.length]);
+        breedInterpreter!.run(reshapedInput, breedOutput);
+
+        List<double> breedProbs = List<double>.from(breedOutput[0]);
+        int bestBreedIndex = 0;
+        double maxBreedProb = -1.0;
+        for (int i = 0; i < breedProbs.length; i++) {
+          if (breedProbs[i] > maxBreedProb) {
+            maxBreedProb = breedProbs[i];
+            bestBreedIndex = i;
+          }
+        }
+        breedLabel = _breedLabels![bestBreedIndex];
+        breedConfidence = maxBreedProb;
+      } catch (e) {
+        debugPrint("Breed inference error: $e");
       }
     }
 
-    return {'label': _labels![bestIndex], 'confidence': maxProb};
+    return {
+      'label': diseaseLabel,
+      'confidence': diseaseConfidence,
+      'breedLabel': breedLabel,
+      'breedConfidence': breedConfidence,
+    };
   }
 
   /// Aggregates raw per-photo results into a single MultiAnalysisResult.
@@ -294,9 +349,43 @@ class DiseaseProvider extends ChangeNotifier {
     final individualResults = raw
         .map((r) => SingleResult(
               label: r['label'].toString(),
-              confidence: r['confidence'] as double,
+              confidence: (r['confidence'] as num?)?.toDouble() ?? 0.0,
+              breedLabel: r['breedLabel']?.toString(),
+              breedConfidence: (r['breedConfidence'] as num?)?.toDouble(),
             ))
         .toList();
+
+    // Aggregate breed across photos
+    SingleResult? aggregatedBreed;
+    final Map<String, List<double>> breedGrouped = {};
+    for (final r in raw) {
+      final bLabel = r['breedLabel']?.toString();
+      final bConf = (r['breedConfidence'] as num?)?.toDouble();
+      if (bLabel != null && bConf != null) {
+        breedGrouped.putIfAbsent(bLabel, () => []).add(bConf);
+      }
+    }
+
+    if (breedGrouped.isNotEmpty) {
+      final sortedBreeds = breedGrouped.entries.toList()
+        ..sort((a, b) {
+          int countCmp = b.value.length.compareTo(a.value.length);
+          if (countCmp != 0) return countCmp;
+          double avgA = a.value.reduce((x, y) => x + y) / a.value.length;
+          double avgB = b.value.reduce((x, y) => x + y) / b.value.length;
+          return avgB.compareTo(avgA);
+        });
+      final bestBreed = sortedBreeds.first;
+      final avgBreedConf =
+          bestBreed.value.reduce((x, y) => x + y) / bestBreed.value.length;
+      aggregatedBreed = SingleResult(
+        label: bestBreed.key,
+        confidence: avgBreedConf,
+        photoCount: bestBreed.value.length,
+        breedLabel: bestBreed.key,
+        breedConfidence: avgBreedConf,
+      );
+    }
 
     if (raw.length == 1) {
       // Single photo fallback
@@ -305,12 +394,15 @@ class DiseaseProvider extends ChangeNotifier {
         results: [
           SingleResult(
             label: perPhotoLabels[0],
-            confidence: raw[0]['confidence'] as double,
+            confidence: (raw[0]['confidence'] as num?)?.toDouble() ?? 0.0,
             photoCount: 1,
+            breedLabel: raw[0]['breedLabel']?.toString(),
+            breedConfidence: (raw[0]['breedConfidence'] as num?)?.toDouble(),
           ),
         ],
         perPhotoLabels: perPhotoLabels,
         individualResults: individualResults,
+        aggregatedBreed: aggregatedBreed,
       );
     }
 
@@ -319,7 +411,7 @@ class DiseaseProvider extends ChangeNotifier {
     for (final r in raw) {
       final label = r['label'].toString();
       grouped.putIfAbsent(label, () => []);
-      grouped[label]!.add(r['confidence'] as double);
+      grouped[label]!.add((r['confidence'] as num?)?.toDouble() ?? 0.0);
     }
 
     // Check if all the same
@@ -335,10 +427,13 @@ class DiseaseProvider extends ChangeNotifier {
             label: label,
             confidence: avgConf,
             photoCount: grouped[label]!.length,
+            breedLabel: aggregatedBreed?.breedLabel,
+            breedConfidence: aggregatedBreed?.breedConfidence,
           ),
         ],
         perPhotoLabels: perPhotoLabels,
         individualResults: individualResults,
+        aggregatedBreed: aggregatedBreed,
       );
     }
 
@@ -360,10 +455,13 @@ class DiseaseProvider extends ChangeNotifier {
             label: winner.key,
             confidence: avgConf,
             photoCount: winner.value.length,
+            breedLabel: aggregatedBreed?.breedLabel,
+            breedConfidence: aggregatedBreed?.breedConfidence,
           ),
         ],
         perPhotoLabels: perPhotoLabels,
         individualResults: individualResults,
+        aggregatedBreed: aggregatedBreed,
       );
     }
 
@@ -371,7 +469,9 @@ class DiseaseProvider extends ChangeNotifier {
     final allResults = raw
         .map((r) => SingleResult(
               label: r['label'].toString(),
-              confidence: r['confidence'] as double,
+              confidence: (r['confidence'] as num?)?.toDouble() ?? 0.0,
+              breedLabel: r['breedLabel']?.toString(),
+              breedConfidence: (r['breedConfidence'] as num?)?.toDouble(),
             ))
         .toList()
       ..sort((a, b) => b.confidence.compareTo(a.confidence));
@@ -381,6 +481,7 @@ class DiseaseProvider extends ChangeNotifier {
       results: allResults,
       perPhotoLabels: perPhotoLabels,
       individualResults: individualResults,
+      aggregatedBreed: aggregatedBreed,
     );
   }
 
@@ -410,7 +511,7 @@ class DiseaseProvider extends ChangeNotifier {
 
   Future<void> _processImage(File file) async {
     try {
-      if (interpreter == null) await _loadModel();
+      if (interpreter == null || breedInterpreter == null) await _loadModel();
 
       final result = await _runInference(file);
       _outputs = [result];
@@ -426,6 +527,7 @@ class DiseaseProvider extends ChangeNotifier {
   @override
   void dispose() {
     interpreter?.close();
+    breedInterpreter?.close();
     super.dispose();
   }
 }

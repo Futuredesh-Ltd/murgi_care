@@ -18,10 +18,16 @@ class SingleResult {
   /// How many photos out of 3 agreed with this result.
   final int photoCount;
 
+  /// Breed detected for this photo.
+  final String? breedLabel;
+  final double? breedConfidence;
+
   const SingleResult({
     required this.label,
     required this.confidence,
     this.photoCount = 1,
+    this.breedLabel,
+    this.breedConfidence,
   });
 }
 
@@ -38,13 +44,25 @@ class MultiAnalysisResult {
   /// Specific results for each individual photo (in order).
   final List<SingleResult> individualResults;
 
+  /// Aggregated breed result across the photos.
+  final SingleResult? aggregatedBreed;
+
   const MultiAnalysisResult({
     required this.type,
     required this.results,
     required this.perPhotoLabels,
     required this.individualResults,
+    this.aggregatedBreed,
   });
 
   /// The primary (winning) result.
   SingleResult get primary => results.first;
+
+  /// Primary breed detected across the session.
+  String? get primaryBreedLabel =>
+      aggregatedBreed?.breedLabel ?? primary.breedLabel;
+
+  /// Primary breed confidence across the session.
+  double? get primaryBreedConfidence =>
+      aggregatedBreed?.breedConfidence ?? primary.breedConfidence;
 }

@@ -268,8 +268,8 @@ class DetectionTab extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             provider.isEnglish
-                ? "Analyzing 3 photos..."
-                : "৩টি ছবি বিশ্লেষণ করা হচ্ছে...",
+                ? "Analyzing disease & breed..."
+                : "রোগ ও জাত বিশ্লেষণ করা হচ্ছে...",
             style: const TextStyle(color: Colors.grey),
           ),
         ],
@@ -360,13 +360,45 @@ class DetectionTab extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 isEnglish
-                    ? "Complete Diagnostic Summary"
-                    : "সম্পূর্ণ ডায়াগনস্টিক সারসংক্ষেপ",
+                    ? "Complete Diagnostic & Breed Summary"
+                    : "সম্পূর্ণ ডায়াগনস্টিক ও জাত সারসংক্ষেপ",
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 14,
                 ),
               ),
+              if (multi.primaryBreedLabel != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.pets_rounded,
+                        size: 15,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "${isEnglish ? "Breed" : "জাত"}: ${_formatBreedLabel(multi.primaryBreedLabel!, isEnglish)}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -420,6 +452,15 @@ class DetectionTab extends ConsumerWidget {
 
       final diagnosisId = _getCleanId(resultToShow.label);
       final isDisease = diagnosisId != "healthy" && diagnosisId != "others";
+
+      final breedLabel = selectedIndex != null
+          ? resultToShow.breedLabel
+          : (multi.primaryBreedLabel ?? resultToShow.breedLabel);
+      final breedConfidence = selectedIndex != null
+          ? (resultToShow.breedConfidence ?? 0.0)
+          : (multi.primaryBreedConfidence ??
+              resultToShow.breedConfidence ??
+              0.0);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -480,6 +521,20 @@ class DetectionTab extends ConsumerWidget {
           else
             _buildSingleResultCard(context, resultToShow, provider.isEnglish),
 
+          if (diagnosisId != 'others' && breedLabel != null) ...[
+            const SizedBox(height: 16),
+            _buildBreedCard(
+              context,
+              breedLabel,
+              breedConfidence,
+              provider.isEnglish,
+              photoCount: isAggregated
+                  ? (multi.aggregatedBreed?.photoCount ?? 1)
+                  : 1,
+              isAggregated: isAggregated,
+            ),
+          ],
+
           const SizedBox(height: 24),
           _buildDiseaseInfo(context, resultToShow.label, provider.isEnglish),
 
@@ -494,6 +549,9 @@ class DetectionTab extends ConsumerWidget {
       final label = provider.outputs![0]['label'].toString();
       final diagnosisId = _getCleanId(label);
       final isDisease = diagnosisId != "healthy" && diagnosisId != "others";
+      final breedLabel = provider.outputs![0]['breedLabel']?.toString();
+      final breedConfidence =
+          (provider.outputs![0]['breedConfidence'] as num?)?.toDouble() ?? 0.0;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -503,6 +561,15 @@ class DetectionTab extends ConsumerWidget {
             provider.outputs![0],
             provider.isEnglish,
           ),
+          if (diagnosisId != 'others' && breedLabel != null) ...[
+            const SizedBox(height: 16),
+            _buildBreedCard(
+              context,
+              breedLabel,
+              breedConfidence,
+              provider.isEnglish,
+            ),
+          ],
           const SizedBox(height: 24),
           _buildDiseaseInfo(context, label, provider.isEnglish),
           if (isDisease) ...[
@@ -845,6 +912,216 @@ class DetectionTab extends ConsumerWidget {
         return clean.isNotEmpty
             ? '${clean[0].toUpperCase()}${clean.substring(1)}'
             : clean;
+    }
+  }
+
+  Widget _buildBreedCard(
+    BuildContext context,
+    String breedLabel,
+    double confidence,
+    bool isEnglish, {
+    int photoCount = 1,
+    bool isAggregated = false,
+  }) {
+    final formattedName = _formatBreedLabel(breedLabel, isEnglish);
+    final subtitle = _getBreedSubtitle(breedLabel, isEnglish);
+    final confidencePercent = (confidence * 100).clamp(0.0, 100.0);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.indigo.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: Colors.indigo.withOpacity(0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.indigo.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.pets_rounded,
+                  color: Colors.indigo,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          isEnglish ? "IDENTIFIED BREED" : "শনাক্তকৃত জাত",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
+                            color: Colors.indigo.shade700,
+                          ),
+                        ),
+                        if (isAggregated && photoCount > 1) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isEnglish
+                                  ? "$photoCount/3 agreed"
+                                  : "$photoCount/৩ মিলছে",
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      formattedName,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "${confidencePercent.toStringAsFixed(1)}%",
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: confidencePercent / 100.0,
+              backgroundColor: Colors.indigo.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo.shade400),
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getCleanBreedId(String label) {
+    return label.replaceAll(RegExp(r'^[0-9]+\s*'), '').trim().toLowerCase();
+  }
+
+  String _formatBreedLabel(String label, bool isEnglish) {
+    final clean = _getCleanBreedId(label);
+    switch (clean) {
+      case 'deshi_female':
+        return isEnglish ? 'Deshi (Female)' : 'দেশি মুরগি (মাদি)';
+      case 'deshi_male':
+        return isEnglish ? 'Deshi (Rooster / Male)' : 'দেশি মোরগ';
+      case 'broiler':
+        return isEnglish ? 'Broiler' : 'ব্রয়লার মুরগি';
+      case 'khashi':
+        return isEnglish ? 'Khashi / Capon' : 'খাসি মুরগি (ক্যাপন)';
+      case 'layer':
+        return isEnglish ? 'Layer' : 'লেয়ার মুরগি';
+      case 'pakistani':
+        return isEnglish ? 'Pakistani (Fayoumi)' : 'পাকিস্তানি (ফাওমি)';
+      case 'sonali':
+        return isEnglish ? 'Sonali' : 'সোনালি মুরগি';
+      case 'tiger':
+        return isEnglish ? 'Tiger Chicken' : 'টাইগার মুরগি';
+      default:
+        final formatted = clean.replaceAll('_', ' ');
+        return formatted.isNotEmpty
+            ? '${formatted[0].toUpperCase()}${formatted.substring(1)}'
+            : formatted;
+    }
+  }
+
+  String _getBreedSubtitle(String label, bool isEnglish) {
+    final clean = _getCleanBreedId(label);
+    switch (clean) {
+      case 'deshi_female':
+      case 'deshi_male':
+        return isEnglish
+            ? 'Indigenous free-range poultry with high natural disease resistance.'
+            : 'উচ্চ রোগ প্রতিরোধ ক্ষমতা সম্পন্ন দেশি জাতের মুরগি।';
+      case 'broiler':
+        return isEnglish
+            ? 'Fast-growing meat bird requiring high protein nutrition & strict brooding.'
+            : 'দ্রুত বর্ধনশীল মাংসের জাত; সুষম খাবার ও নিবিড় পরিচর্যা প্রয়োজন।';
+      case 'khashi':
+        return isEnglish
+            ? 'Castrated cockerel raised for tender high-yield meat production.'
+            : 'ক্যাপোনাইজড মুরগি যা সুস্বাদু ও পুষ্টিকর মাংসের জন্য পালিত হয়।';
+      case 'layer':
+        return isEnglish
+            ? 'Specialized commercial breed optimized for high egg production.'
+            : 'বাণিজ্যিক ডিম উৎপাদনকারী জাত; সঠিক ক্যালসিয়াম ও পুষ্টি নিশ্চিত করুন।';
+      case 'pakistani':
+        return isEnglish
+            ? 'Fayoumi breed renowned for hardiness and hot-climate adaptability.'
+            : 'কঠোর আবহাওয়া সহনশীল ও রোগ প্রতিরোধী ফাওমি জাত।';
+      case 'sonali':
+        return isEnglish
+            ? 'Popular dual-purpose hybrid suited for both meat and egg farming.'
+            : 'মাংস ও ডিম উভয় উৎপাদনের জন্য অত্যন্ত জনপ্রিয় লাভজনক জাত।';
+      case 'tiger':
+        return isEnglish
+            ? 'Heavy-bodied multi-color breed with rapid growth and strong vigor.'
+            : 'দ্রুত বর্ধনশীল এবং আকর্ষণীয় রঙিন ভারী জাতের মুরগি।';
+      default:
+        return isEnglish ? 'Identified chicken breed.' : 'শনাক্তকৃত মুরগির জাত।';
     }
   }
 }

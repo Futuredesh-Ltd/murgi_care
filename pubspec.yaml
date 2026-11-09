@@ -64,6 +64,8 @@ flutter:
   assets:
     - assets/model.tflite
     - assets/labels.txt
+    - assets/breed.tflite
+    - assets/breed_labels.txt
     - assets/techlogo.png
     - assets/
 
