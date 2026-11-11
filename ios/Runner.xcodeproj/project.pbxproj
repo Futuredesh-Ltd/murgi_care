@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -490,6 +490,7 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = AXUU5686C5;
 				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 5.0.0;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MurgiCare;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -678,6 +679,7 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = AXUU5686C5;
 				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 5.0.0;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MurgiCare;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -704,6 +706,7 @@
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = AXUU5686C5;
 				ENABLE_BITCODE = NO;
+				FLUTTER_BUILD_NAME = 5.0.0;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MurgiCare;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";

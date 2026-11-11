@@ -1,8 +1,9 @@
-0 deshi_female
-1 broiler
+0 broiler
+1 deshi_female
 2 deshi_male
 3 khashi
 4 layer
 5 pakistani
 6 sonali
 7 tiger
+8 others

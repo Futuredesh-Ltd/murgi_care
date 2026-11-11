@@ -521,7 +521,9 @@ class DetectionTab extends ConsumerWidget {
           else
             _buildSingleResultCard(context, resultToShow, provider.isEnglish),
 
-          if (diagnosisId != 'others' && breedLabel != null) ...[
+          if (breedLabel != null &&
+              (diagnosisId != 'others' ||
+                  _getCleanBreedId(breedLabel) != 'others')) ...[
             const SizedBox(height: 16),
             _buildBreedCard(
               context,
@@ -561,7 +563,9 @@ class DetectionTab extends ConsumerWidget {
             provider.outputs![0],
             provider.isEnglish,
           ),
-          if (diagnosisId != 'others' && breedLabel != null) ...[
+          if (breedLabel != null &&
+              (diagnosisId != 'others' ||
+                  _getCleanBreedId(breedLabel) != 'others')) ...[
             const SizedBox(height: 16),
             _buildBreedCard(
               context,
@@ -923,6 +927,11 @@ class DetectionTab extends ConsumerWidget {
     int photoCount = 1,
     bool isAggregated = false,
   }) {
+    final cleanBreedId = _getCleanBreedId(breedLabel);
+    if (cleanBreedId == 'others') {
+      return CustomWidgets.buildInvalidCard(isEnglish);
+    }
+
     final formattedName = _formatBreedLabel(breedLabel, isEnglish);
     final subtitle = _getBreedSubtitle(breedLabel, isEnglish);
     final confidencePercent = (confidence * 100).clamp(0.0, 100.0);
@@ -967,7 +976,10 @@ class DetectionTab extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
                       children: [
                         Text(
                           isEnglish ? "IDENTIFIED BREED" : "শনাক্তকৃত জাত",
@@ -978,8 +990,7 @@ class DetectionTab extends ConsumerWidget {
                             color: Colors.indigo.shade700,
                           ),
                         ),
-                        if (isAggregated && photoCount > 1) ...[
-                          const SizedBox(width: 6),
+                        if (isAggregated && photoCount > 1)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -1000,7 +1011,6 @@ class DetectionTab extends ConsumerWidget {
                               ),
                             ),
                           ),
-                        ],
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -1058,12 +1068,17 @@ class DetectionTab extends ConsumerWidget {
   }
 
   String _getCleanBreedId(String label) {
-    return label.replaceAll(RegExp(r'^[0-9]+\s*'), '').trim().toLowerCase();
+    final clean =
+        label.replaceAll(RegExp(r'^[0-9]+\s*'), '').trim().toLowerCase();
+    if (clean.contains('others')) return 'others';
+    return clean;
   }
 
   String _formatBreedLabel(String label, bool isEnglish) {
     final clean = _getCleanBreedId(label);
     switch (clean) {
+      case 'others':
+        return isEnglish ? 'Non-Poultry Image' : 'অপ্রাসঙ্গিক ছবি';
       case 'deshi_female':
         return isEnglish ? 'Deshi (Female)' : 'দেশি মুরগি (মাদি)';
       case 'deshi_male':
@@ -1091,6 +1106,10 @@ class DetectionTab extends ConsumerWidget {
   String _getBreedSubtitle(String label, bool isEnglish) {
     final clean = _getCleanBreedId(label);
     switch (clean) {
+      case 'others':
+        return isEnglish
+            ? "This doesn't look like chicken droppings. Please provide a valid image."
+            : "এটি মুরগির মলের ছবি বলে মনে হচ্ছে না। দয়া করে সঠিক ছবি দিন।";
       case 'deshi_female':
       case 'deshi_male':
         return isEnglish

@@ -2,7 +2,7 @@ name: murgi_care
 description: "Instant AI disease detection for your poultry"
 
 publish_to: 'none'
-version: 4.0.1+8
+version: 5.0.0+9
 
 
 environment:
